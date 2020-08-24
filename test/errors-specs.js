@@ -1,6 +1,6 @@
 import * as QUnit from "qunitjs"
 import {
-  ACTION_IDENTITY, createStateMachine, decorateWithEntryActions, INIT_EVENT, INIT_STATE, KinglyError, mergeOutputsFn
+  ACTION_IDENTITY, createStateMachine, INIT_EVENT, INIT_STATE, KinglyError, mergeOutputsFn
 } from "../src"
 import {applyJSONpatch} from "./helpers"
 import {fsmContracts} from "../src/contracts"
@@ -116,5 +116,7 @@ QUnit.test("Update state function error - throws", function exec_test(assert) {
       throw errorString
     },
   };
-  assert.ok(createStateMachine(fsmDef, debug_settings) instanceof KinglyError, `KinglyError thrown`);
+  const fsm = createStateMachine(fsmDef, debug_settings);
+  console.info(`fsm`,fsm)
+  assert.ok(fsm instanceof KinglyError, `KinglyError thrown`);
 });

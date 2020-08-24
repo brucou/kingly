@@ -119,10 +119,16 @@ export function normalizeTransitions(fsmDef) {
   }
 }
 
-// Alias for compatibility before deprecating entirely create_state_machine
-// TODO: this is not used anymore apparently so remove
-export function create_state_machine(fsmDef, settings) {
-  return createStateMachine(fsmDef, settings)
+export function createStateMachine(fsmDef, settings) {
+  const res = createStateMachineAPIs(fsmDef, settings);
+  if (res instanceof Error) return res
+    else return res.withProtectedState
+}
+
+export function createPureStateMachine(fsmDef, settings) {
+  const res = createStateMachineAPIs(fsmDef, settings);
+  if (res instanceof Error) return res
+    else return res.withPureInterface
 }
 
 /**
@@ -130,9 +136,9 @@ export function create_state_machine(fsmDef, settings) {
  * extended state for the machine is included in the machine definition.
  * @param {FSM_Def} fsmDef
  * @param {FSM_Settings} settings
- * @return {function(*=)}
+ * @return {{withProtectedState: function(input), withPureState: function(input, fsmState)}}|Error
  */
-export function createStateMachine(fsmDef, settings) {
+export function createStateMachineAPIs(fsmDef, settings) {
   const {
     states: control_states,
     events,
@@ -166,6 +172,7 @@ export function createStateMachine(fsmDef, settings) {
         trace: {
           info: e.errors,
           message: e.message,
+          machineState: {cs: undefined, es: initialExtendedState, hs: undefined}
         }
       });
       return e
@@ -572,62 +579,82 @@ export function createStateMachine(fsmDef, settings) {
     return e
   }
 
+  const fsmAPIs = {
   // NOTE : yield is a reserved JavaScript word so using yyield
-  return function yyield(x) {
-    try {
-      const {eventName, eventData} = destructureEvent(x);
-      const current_state = getCurrentControlState();
+    withProtectedState:   function yyield(x) {
+      try {
+        const {eventName, eventData} = destructureEvent(x);
+        const current_state = getCurrentControlState();
 
-      tracer({
-        type: INPUT_MSG,
-        trace: {
-          info: {eventName, eventData},
-          machineState: {cs: current_state, es: extendedState, hs: history}
-        }
-      });
-
-      const outputs = send_event(x, true);
-
-      debug && console.info("OUTPUTS:", outputs);
-      tracer({
-        type: OUTPUTS_MSG,
-        trace: {
-          outputs,
-          machineState: {cs: getCurrentControlState(), es: extendedState, hs: history}
-        }
-      });
-
-      return outputs
-    }
-    catch (e) {
-      if (e instanceof KinglyError) {
-        // We don't break the program, but we can't continue as nothing happened: we return the error
         tracer({
-          type: ERROR_MSG,
+          type: INPUT_MSG,
           trace: {
-            error: e,
-            message: `An error ocurred while running an input through the machine!`,
+            info: {eventName, eventData},
+            machineState: {cs: current_state, es: extendedState, hs: history}
+          }
+        });
+
+        const outputs = send_event(x, true);
+
+        debug && console.info("OUTPUTS:", outputs);
+        tracer({
+          type: OUTPUTS_MSG,
+          trace: {
+            outputs,
             machineState: {cs: getCurrentControlState(), es: extendedState, hs: history}
           }
         });
 
-        return e
+        return outputs
+      }
+      catch (e) {
+        if (e instanceof KinglyError) {
+          // We don't break the program, but we can't continue as nothing happened: we return the error
+          tracer({
+            type: ERROR_MSG,
+            trace: {
+              error: e,
+              message: `An error ocurred while running an input through the machine!`,
+              machineState: {cs: getCurrentControlState(), es: extendedState, hs: history}
+            }
+          });
+
+          return e
+        }
+        else {
+          tracer({
+            type: ERROR_MSG,
+            trace: {
+              error: e,
+              message: `An unknown error ocurred while running an input through the machine!`,
+              machineState: {cs: getCurrentControlState(), es: extendedState, hs: history}
+            }
+          });
+          console.error(`yyield > unexpected error!`, e);
+          // We should only catch the errors we are responsible for!
+          throw e
+        }
+      }
+    },
+    withPureInterface: function compute(input, fsmState){
+      // Reset the machien state in closure
+      if (fsmState == null) {
+        // the machine was already initialized by the machine factory
+        // or we simply want to run the
       }
       else {
-        tracer({
-          type: ERROR_MSG,
-          trace: {
-            error: e,
-            message: `An unknown error ocurred while running an input through the machine!`,
-            machineState: {cs: getCurrentControlState(), es: extendedState, hs: history}
-          }
-        });
-        console.error(`yyield > unexpected error!`, e);
-        // We should only catch the errors we are responsible for!
-        throw e
+      const {cs, hs, es} = fsmState;
+        extendedState = es;
+        history = hs;
+        hash_states[INIT_STATE].current_state_name = cs;
       }
+      // run the machine
+      const outputs = fsmAPIs.withProtectedState(input);
+      return {outputs, fsmState: {cs: getCurrentControlState(), hs:history, es:extendedState}}
     }
   }
+
+  return fsmAPIs
 }
 
 /**

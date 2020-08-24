@@ -2,7 +2,7 @@ import * as QUnit from "qunitjs"
 import {clone, F, merge, T} from "ramda"
 import {
   ACTION_IDENTITY, arrayizeOutput,
-  createStateMachine, INIT_EVENT, INIT_STATE, NO_OUTPUT
+  createPureStateMachine, INIT_EVENT, INIT_STATE, NO_OUTPUT
 } from "../src"
 import {applyPatch} from "json-patch-es6"
 import {assertContract, isArrayUpdateOperations} from "../test/helpers"
@@ -125,9 +125,9 @@ function another_dummy_action_with_update(extendedState, event_data, settings) {
   )
 }
 
-QUnit.module("Testing createStateMachine(fsmDef, settings)", {});
+QUnit.module("Testing createPureStateMachine(fsmDef, settings)", {});
 
-QUnit.test("event, no action, false guard", function exec_test(assert) {
+QUnit.test("initial (no prev state) - event, no action, false guard", function exec_test(assert) {
   const fsmDef = {
     states: { A: '', B: '' },
     events: ['ev'],
@@ -138,9 +138,26 @@ QUnit.test("event, no action, false guard", function exec_test(assert) {
     initialExtendedState: initialExtendedState,
     updateState: applyJSONpatch,
   };
-  const fsm = createStateMachine(fsmDef, default_settings);
-  const result = fsm({ ev: initialExtendedState });
-  assert.deepEqual(result, [null], `event starts the state machine`);
+  const fsm = createPureStateMachine(fsmDef, default_settings);
+  const {outputs, fsmState } = fsm({ ev: initialExtendedState });
+  assert.deepEqual(outputs, [null], `pure machine computes first input correctly - event starts the state machine`);
+  assert.deepEqual(fsmState, {
+    "cs": "A",
+    "es": {
+      "a_key": "some value",
+      "another_key": "another value"
+    },
+    "hs": {
+      "deep": {
+        "A": "",
+        "B": ""
+      },
+      "shallow": {
+        "A": "",
+        "B": ""
+      }
+    }
+  }, `pure machine computes first input correctly - event starts the state machine`);
 });
 
 QUnit.test("event, no action, true guard", function exec_test(assert) {
@@ -154,9 +171,23 @@ QUnit.test("event, no action, true guard", function exec_test(assert) {
     initialExtendedState: initialExtendedState,
     updateState: applyJSONpatch,
   };
-  const fsm = createStateMachine(fsmDef);
-  const result = fsm({ ev: initialExtendedState });
-  assert.deepEqual(result, null, `INIT event starts the state machine`);
+  const fsm = createPureStateMachine(fsmDef);
+  const {outputs, fsmState } = fsm({ ev: initialExtendedState });
+  assert.deepEqual(outputs, null, `INIT event starts the state machine`);
+  assert.deepEqual(fsmState, {
+    "cs": "A",
+    "es": initialExtendedState,
+    "hs": {
+      "deep": {
+        "A": "",
+        "B": ""
+      },
+      "shallow": {
+        "A": "",
+        "B": ""
+      }
+    }
+  }, `INIT event starts the state machine`);
 });
 
 QUnit.test("event, action, false guard", function exec_test(assert) {
@@ -174,9 +205,23 @@ QUnit.test("event, action, false guard", function exec_test(assert) {
     initialExtendedState: initialExtendedState,
     updateState: applyJSONpatch,
   };
-  const fsm = createStateMachine(fsmDef);
-  const result = fsm({ ev: initialExtendedState });
-  assert.deepEqual(result, null, `event starts the state machine`);
+  const fsm = createPureStateMachine(fsmDef);
+  const {outputs, fsmState } = fsm({ ev: initialExtendedState });
+  assert.deepEqual(outputs, null, `event starts the state machine`);
+  assert.deepEqual(fsmState, {
+    "cs": "A",
+    "es": initialExtendedState,
+    "hs": {
+      "deep": {
+        "A": "",
+        "B": ""
+      },
+      "shallow": {
+        "A": "",
+        "B": ""
+      }
+    }
+  }, `event starts the state machine`);
 });
 
 QUnit.test("event, action, true guard", function exec_test(assert) {
@@ -196,10 +241,24 @@ QUnit.test("event, action, true guard", function exec_test(assert) {
     initialExtendedState: initialExtendedState,
     updateState: applyJSONpatch,
   };
-  const fsm = createStateMachine(fsmDef, debug_settings);
-  const result = fsm({ ev: initialExtendedState });
-  assert.deepEqual(result, arrayizeOutput(dummy_action_result.outputs),
+  const fsm = createPureStateMachine(fsmDef, debug_settings);
+  const {outputs, fsmState} = fsm({ ev: initialExtendedState });
+  assert.deepEqual(outputs, arrayizeOutput(dummy_action_result.outputs),
     `event starts the state machine, transition is taken, action is executed`);
+  assert.deepEqual(fsmState, {
+    "cs": "B",
+    "es": initialExtendedState,
+    "hs": {
+      "deep": {
+        "A": "",
+        "B": ""
+      },
+      "shallow": {
+        "A": "",
+        "B": ""
+      }
+    }
+  }, `event starts the state machine, transition is taken, action is executed`);
 });
 
 QUnit.test("event, 2 actions, [T,T] conditions, 1st action executed", function exec_test(assert) {
@@ -228,9 +287,9 @@ QUnit.test("event, 2 actions, [T,T] conditions, 1st action executed", function e
     initialExtendedState: initialExtendedState,
     updateState: applyJSONpatch,
   };
-  const fsm = createStateMachine(fsmDef, default_settings);
-  const result = fsm({ ev: initialExtendedState });
-  assert.deepEqual(result, arrayizeOutput(dummy_action_result.outputs),
+  const fsm = createPureStateMachine(fsmDef, default_settings);
+  const {outputs, fsmState} = fsm({ ev: initialExtendedState });
+  assert.deepEqual(outputs, arrayizeOutput(dummy_action_result.outputs),
     `event starts the state machine, transition is taken, action is executed`);
 });
 
@@ -260,9 +319,9 @@ QUnit.test("event, 2 actions, [F,T] conditions, 2nd action executed", function e
     initialExtendedState: initialExtendedState,
     updateState: applyJSONpatch,
   };
-  const fsm = createStateMachine(fsmDef, default_settings);
-  const result = fsm({ ev: initialExtendedState });
-  assert.deepEqual(result, arrayizeOutput(dummy_action_result.outputs),
+  const fsm = createPureStateMachine(fsmDef, default_settings);
+  const {outputs, fsmState} = fsm({ ev: initialExtendedState });
+  assert.deepEqual(outputs, arrayizeOutput(dummy_action_result.outputs),
     `event starts the state machine, transition is taken, action is executed`);
 });
 
@@ -292,9 +351,24 @@ QUnit.test("event, 2 actions, [T,F] conditions, 1st action executed", function e
     initialExtendedState: initialExtendedState,
     updateState: applyJSONpatch,
   };
-  const fsm = createStateMachine(fsmDef, default_settings);
-  const result = fsm({ ev: initialExtendedState });
-  assert.deepEqual(result, arrayizeOutput(dummy_action_result.outputs),
+  const fsm = createPureStateMachine(fsmDef, default_settings);
+  const {outputs, fsmState} = fsm({ ev: initialExtendedState });
+  assert.deepEqual(outputs, arrayizeOutput(dummy_action_result.outputs),
+    `event starts the state machine, transition is taken, action is executed`);
+  assert.deepEqual(fsmState, {
+      "cs": "B",
+      "es": initialExtendedState,
+      "hs": {
+        "deep": {
+          "A": "",
+          "B": ""
+        },
+        "shallow": {
+          "A": "",
+          "B": ""
+        }
+      }
+    },
     `event starts the state machine, transition is taken, action is executed`);
 });
 
@@ -318,9 +392,25 @@ QUnit.test("event, 2 actions, [F,F] conditions, no action executed", function ex
     initialExtendedState: initialExtendedState,
     updateState: applyJSONpatch,
   };
-  const fsm = createStateMachine(fsmDef, debug_settings);
-  const result = fsm({ ev: initialExtendedState });
-  assert.deepEqual(result, [null],
+  const fsm = createPureStateMachine(fsmDef, debug_settings);
+  const {outputs, fsmState} = fsm({ ev: initialExtendedState });
+  assert.deepEqual(outputs, [null],
+    `event starts the state machine, all guards failing, no transition is taken, no action is executed`);
+  assert.deepEqual(fsmState, {
+      "cs": "A",
+      "es": {
+        "a_key": "some value",
+        "another_key": "another value"
+      },
+      "hs": {
+        "deep": {
+          "A": ""
+        },
+        "shallow": {
+          "A": ""
+        }
+      }
+    },
     `event starts the state machine, all guards failing, no transition is taken, no action is executed`);
 });
 
@@ -335,9 +425,23 @@ QUnit.test("event, 2 actions with no extendedState update, NOK -> A -> B, no gua
     initialExtendedState: initialExtendedState,
     updateState: applyJSONpatch,
   };
-  const fsm = createStateMachine(fsmDef, default_settings);
-  const result2 = fsm({ [EVENT1]: EVENT1_DATA });
-  assert.deepEqual([result2], [arrayizeOutput(another_output)], `event triggers correct transition`);
+  const fsm = createPureStateMachine(fsmDef, default_settings);
+  const {outputs, fsmState} = fsm({ [EVENT1]: EVENT1_DATA });
+  assert.deepEqual(outputs, arrayizeOutput(another_output), `event triggers correct transition`);
+  assert.deepEqual(fsmState, {
+    "cs": "B",
+    "es": initialExtendedState,
+    "hs": {
+      "deep": {
+        "A": "",
+        "B": ""
+      },
+      "shallow": {
+        "A": "",
+        "B": ""
+      }
+    }
+  }, `event triggers correct transition`);
 });
 
 QUnit.test("event, 2 actions with extendedState update, NOK -> A -> B, no guards", function exec_test(assert) {
@@ -351,10 +455,10 @@ QUnit.test("event, 2 actions with extendedState update, NOK -> A -> B, no guards
     initialExtendedState: initialExtendedState,
     updateState: applyJSONpatch,
   };
-  const fsm = createStateMachine(fsmDef, default_settings);
-  const result2 = fsm({ [EVENT1]: EVENT1_DATA });
+  const fsm = createPureStateMachine(fsmDef, default_settings);
+  const {outputs, fsmState} = fsm({ [EVENT1]: EVENT1_DATA });
   const cloned_model_initial = clone(initialExtendedState);
-  assert.deepEqual([result2], [
+  assert.deepEqual([outputs], [
     [
       {
         "event_data": {
@@ -383,10 +487,30 @@ QUnit.test("2 INIT event", function exec_test(assert) {
     initialExtendedState: initialExtendedState,
     updateState: applyJSONpatch,
   };
-  const fsm = createStateMachine(fsmDef, debug_settings);
+  const fsm = createPureStateMachine(fsmDef, debug_settings);
   const result2 = fsm({[INIT_EVENT]: EVENT1_DATA});
   assert.deepEqual([result2], [
-
-    null
+    {
+      "fsmState": {
+        "cs": "A",
+        "es": {
+          "a_key": {
+            "new_model_key": "new_model_value"
+          },
+          "new_model_key_1": "new_model_value_1"
+        },
+        "hs": {
+          "deep": {
+            "A": "",
+            "B": ""
+          },
+          "shallow": {
+            "A": "",
+            "B": ""
+          }
+        }
+      },
+      "outputs": null
+    }
   ], `event triggers correct transition`);
 });

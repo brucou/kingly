@@ -1,5 +1,5 @@
 import {
-  ACTION_IDENTITY, create_state_machine, INIT_EVENT, INIT_STATE, NO_OUTPUT, SHALLOW, DEEP, traceFSM,
+  ACTION_IDENTITY, createStateMachine, INIT_EVENT, INIT_STATE, NO_OUTPUT, SHALLOW, DEEP,
   historyState
 } from "../src"
 import { formatResult } from "./helpers"
@@ -194,7 +194,7 @@ QUnit.test("shallow history transitions, event CASCADING transitions", function 
     { [EVENT1]: {} },
     { [EVENT4]: {} },
   ];
-  const fsm = create_state_machine(fsmDef, {debug:{console}});
+  const fsm = createStateMachine(fsmDef, {debug:{console}});
   const outputSequence = inputSequence.map(fsm);
   const formattedResults = outputSequence.map(output => output && output.map(formatResult));
   assert.deepEqual(formattedResults, [
@@ -252,7 +252,7 @@ QUnit.test("deep history transitions, event CASCADING transitions", function exe
     { [EVENT1]: {} },
     { [EVENT4]: {} },
   ];
-  const fsm = create_state_machine(fsmDef);
+  const fsm = createStateMachine(fsmDef);
   const outputSequence = inputSequence.map(fsm);
   const formattedResults = outputSequence.map(output => output && output.map(formatResult));
   assert.deepEqual(formattedResults, [
@@ -323,7 +323,7 @@ QUnit.test("shallow history transitions FROM INSIDE, event CASCADING transitions
     { [EVENT3]: {} },
     { [EVENT4]: {} },
   ];
-  const fsm = create_state_machine(fsmDef, default_settings);
+  const fsm = createStateMachine(fsmDef, default_settings);
   const outputSequence = inputSequence.map(fsm);
   console.log(`outputSequence `, outputSequence)
   const formattedResults = outputSequence.map(output => output && output.map(formatResult));
@@ -394,7 +394,7 @@ QUnit.test("deep history transitions FROM INSIDE, event CASCADING transitions", 
     { [EVENT3]: {} },
     { [EVENT4]: {} },
   ];
-  const fsm = create_state_machine(fsmDef, default_settings);
+  const fsm = createStateMachine(fsmDef, default_settings);
   const outputSequence = inputSequence.map(fsm);
   const formattedResults = outputSequence.map(output => output && output.map(formatResult));
   assert.deepEqual(formattedResults, [
@@ -435,7 +435,7 @@ QUnit.test("eventless x atomic transitions", function exec_test(assert) {
     { [EVENT1]: {} },
     { [EVENT2]: {} },
   ];
-  const fsm = create_state_machine(fsmDef, {debug:{console}});
+  const fsm = createStateMachine(fsmDef, {debug:{console}});
   const outputSequence = inputSequence.map(fsm);
   const formattedResults = outputSequence.map(output => output && output.map(formatResult));
   assert.deepEqual(formattedResults, [
