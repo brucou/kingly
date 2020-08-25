@@ -10,4 +10,5 @@ import './errors-specs'
 import './contracts.ad-hoc.specs'
 import './issue-5.specs'
 import './issue-4.specs'
+import './issue-4-pure.specs'
 QUnit.dump.maxDepth = 50;

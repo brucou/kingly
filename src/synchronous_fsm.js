@@ -637,12 +637,20 @@ export function createStateMachineAPIs(fsmDef, settings) {
       }
     },
     withPureInterface: function compute(input, fsmState){
-      // Reset the machien state in closure
-      if (fsmState == null) {
-        // the machine was already initialized by the machine factory
-        // or we simply want to run the
+      if (fsmState === void 0){
+        // Don't update the state of the state machine
+        // This means the machine will continue processing inputs
+        // using its current state
+      }
+      else if (fsmState == null) {
+        // Reinitialize the machine
+        extendedState = initialExtendedState;
+        history = initHistoryDataStructure(stateList);
+        hash_states[INIT_STATE].current_state_name = INIT_STATE;
+        start();
       }
       else {
+        // Reset the state (available in closure) of the state machine
       const {cs, hs, es} = fsmState;
         extendedState = es;
         history = hs;

@@ -1,4 +1,5 @@
 # TODO
+- do the createPureStateMachine also in compiler
 - if I do a game, this one, it has actual modal states: https://github.com/jakesgordon/javascript-tiny-platformer
   - jumping while falling: ..., jumping while not falling: jump
 - present kingly not as porable UI library but state machine library, that allows portable UI
