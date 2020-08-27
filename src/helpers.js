@@ -539,16 +539,19 @@ export function isAtomicState(analyzedStates, controlState) {
 /**
  * Updates the history state (both deep and shallow) after `state_from_name` has been exited. Impacted states are the
  * `stateAncestors` which are the ancestors for the exited state.
- * @param {History} history Contains deep history and shallow history for all
+ * @param {History} _history Contains deep history and shallow history for all
  * control states, except the INIT_STATE (not that the concept has no value for atomic state). The function
  * `updateHistory` allows to update the history as transitions occur in the state machine.
  * @param {Object.<DEEP|SHALLOW, Object.<ControlState, Array<ControlState>>>} stateAncestors
  * @returns {History}
  * @modifies history
  */
-export function updateHistory(history, stateAncestors, state_from_name) {
-  // Edge case, we start with INIT_STATE but that is not kept in the history (no transition to it!!)
+export function updateHistory(_history, stateAncestors, state_from_name) {
+  // 27.08.2020: Now that I expose history state I have to make sure that it is not mutated!!
+  // Fastest way should be to clone
+  const history = JSON.parse(JSON.stringify(_history));
 
+  // Edge case, we start with INIT_STATE but that is not kept in the history (no transition to it!!)
   if (state_from_name === INIT_STATE) {
     return history
   }

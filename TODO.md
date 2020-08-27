@@ -1,4 +1,6 @@
 # TODO
+- beware that history states must not be updated in place  
+- DSL can be made with codemirror playground - cf. brave bookmark (bar, specs editor)
 - do the createPureStateMachine also in compiler
 - if I do a game, this one, it has actual modal states: https://github.com/jakesgordon/javascript-tiny-platformer
   - jumping while falling: ..., jumping while not falling: jump

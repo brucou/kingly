@@ -660,7 +660,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
       const outputs = fsmAPIs.withProtectedState(input);
       return {outputs, fsmState: {cs: getCurrentControlState(), hs:history, es:extendedState}}
     }
-  }
+  };
 
   return fsmAPIs
 }
