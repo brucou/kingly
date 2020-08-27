@@ -548,8 +548,11 @@ export function isAtomicState(analyzedStates, controlState) {
  */
 export function updateHistory(_history, stateAncestors, state_from_name) {
   // 27.08.2020: Now that I expose history state I have to make sure that it is not mutated!!
-  // Fastest way should be to clone
-  const history = JSON.parse(JSON.stringify(_history));
+  // We have a fixed format here, so we use native `assign` at deepest level
+  const history = {
+    [DEEP]: Object.assign({}, _history[DEEP]),
+    [SHALLOW]: Object.assign({}, _history[SHALLOW]),
+  };
 
   // Edge case, we start with INIT_STATE but that is not kept in the history (no transition to it!!)
   if (state_from_name === INIT_STATE) {
