@@ -101,7 +101,7 @@ This library was born in early 2016 from:
   - mostly, we want the state machine library API design to be as close as possible from the mathematical object denoting it. This should allow us to reason about it, compose and reuse it easily. 
   - most libraries we found either do not feature hierarchy in their state machines, or use a rather imperative API, or impose a concurrency model on top of the state machine's control flow
 
-In the three years of existence and use of this library, we reached an API which should be fairly stable. It has been used succesfully for user-interfaces as well as in other contexts:
+In the four years of existence and use of this library, we reached an API which should be fairly stable. It has been used succesfully for user-interfaces as well as in other contexts:
 
 - in multi-steps workflows: see an example [here](https://github.com/brucou/component-combinators/tree/master/examples/volunteerApplication), a constant feature of enterprise software today
 - for ['smart' synchronous streams](https://github.com/brucou/partial-synchronous-streams), which tracks computation state to avoid useless re-computations
@@ -172,7 +172,7 @@ We have included two helpers for visualization of the state machine:
 
 ![visualization example](https://github.com/brucou/state-transducer-visualizer/raw/master/assets/cd-player-automatic-dagre-visualization.png)
 
-Automated visualization works well with simple graphs, but seems to encounter trouble to generate optimally satisfying complex graphs. The Dagre layout seems to be a least worse option. I believe the best option for visualization is to use professional specialized tooling such as `yed`. In a future version, we will provide a conversion to `yed` graph format to facilitate such workflow. The [`yed`](https://www.yworks.com/products/yed)'s orthogonal and flowchart layout seem to give pretty good results.
+Automated visualization works well with simple graphs, but seems to encounter trouble to generate optimally satisfying complex graphs. The Dagre layout seems to be a least worse option. I believe the best option for visualization is to use professional specialized tooling such as `yed`. We provide a CLI for conversion to `yed` graph format to facilitate such workflow (cf. [yed2Kingly](https://github.com/brucou/yed2Kingly)). The [`yed`](https://www.yworks.com/products/yed)'s orthogonal and flowchart layout seem to give pretty good results.
 
 # Credits
 - Credit to [Pankaj Parashar](https://css-tricks.com/password-strength-meter/) for the password selector
@@ -204,8 +204,10 @@ Automated visualization works well with simple graphs, but seems to encounter tr
 ## Roadmap v1.X: consolidate
 - [ ] support for live, interactive debugging
   - render time machine
-- [ ] add cloning API
-- [ ] add reset API
+- [ ] add cloning API (useful for testing, to avoid replaying all machine inputs to get it back to a given state)
+- [ ] add reset API 
+- [ ] document serialization support (already implemented in core, to implement in compiler too. Cf. https://github.com/brucou/kingly/issues/8)
+- [ ] compiler should generate code optimized for debugging or size (not for speed, I don't believe there is much to gain there). Configurable via flags. Right now it is something in the middle.
 
 ## Roadmap v1.Y: testing
 - [ ] finalize, document and release testing API 

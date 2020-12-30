@@ -1,8 +1,8 @@
 {
   "name": "kingly",
   "sideEffects": false,
-  "version": "0.28.3",
-  "description": "Extended Hierarchical State Transducer library",
+  "version": "0.28.4",
+  "description": "State machine library (Extended Hierarchical State Transducer)",
   "repository": {
     "type": "git",
     "url": "https://github.com/brucou/kingly"
@@ -60,6 +60,7 @@
     "json-patch-es6": "^2.0.6",
     "kuker-emitters": "^6.7.4",
     "nodemon": "^1.9.2",
+    "parcel": "^1.12.4",
     "parcel-bundler": "^1.10.3",
     "qunitjs": "^1.20.0",
     "ramda": "^0.25.0",
@@ -81,8 +82,7 @@
     "watchify": "^3.8.0"
   },
   "dependencies": {
-    "fp-rosetree": "^0.6.2",
-    "parcel": "^1.12.4"
+    "fp-rosetree": "^0.6.2"
   },
   "browserslist": [
     "> 1%",
