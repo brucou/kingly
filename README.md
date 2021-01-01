@@ -31,16 +31,13 @@ state machines. The behaviour is the relation between the actions performed on t
 interface (button clicks, etc.) and the actions (commands) to perform on the interfaced systems 
 (fetch data, display screens, etc.). You specify the machine as a graph. The library computes a function which 
  implements the state machine which specifies the behaviour. You **drive** your interface with 
- that function, you **display** the UI with the UI framework of  your choice. Tests can be automatically generated.
+ that function, you **display** the UI with the UI framework of  your choice. 
 
 Salient features:
 
-- **small size**: treeshakeable implementation, with a core of 5KB, down from 12kB
-- **small API**: one function for the state machine, one function for tracing (and one function 
-for the [test generation](https://github.com/brucou/state-transducer-testing) available in a 
-separate package)
+- **small size**: implementation treeshakeable to 5KB core, [compilable to 1KB-2KB](https://github.com/brucou/slim)
+- **small API**: one function for the state machine
 - **just a function!**: easy to integrate into any front-end framework
-- **[automatic test generation!](https://github.com/brucou/state-transducer-testing)**: write the machine, how to progress from one state to another, and let the computer generate hundreds of tests for you
 
 # Documentation
 All documentation can be accessed in the [dedicated web site](https://brucou.github.io/documentation/).
