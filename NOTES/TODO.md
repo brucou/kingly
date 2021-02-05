@@ -1,62 +1,3 @@
-# Done
-- we thus have a lot of control states with a lot of events circling to the same origin state
-  - the visualization does not help, we need other ways to indicate what pieces of state are modified in these cases
-  - also need to condensate the visualization somewhat to avoid a ton of circles
-  - COULD ALSO have an multi-label edges, e.g. e[g]/a \n e[g]/a \n ...
-    - need not do anything special with yed!!
-    - can be done relatively quickly
-    - small thing that helps a lot differentiate vs. other like xstate visualizer
-    - that introduces however ambiguity in the grammar 
-      - means more docs, more code complexity...
-      - could impose e[g]/a in ONE line so easy to read and parse: YES in a first version
-      - could also change the separator to some unused symbol | or || for instance
-      
-```js
-| e[g]/a
-| e[g]/a
-| e[g]/a
-```
-
-
-# Rejected
-- Do leonardo.io (vanilla JS should be the simplest to reimplement)
-  - but does not demonstrate so much about benefits? just a nice demo?
-  - (use D3, use popup/modals, use component (color picker) etc)
-=> NO! Leonardo already written without framework, and there is almost to no modes, so value of state machines is little
-- Do excalidraw example (React, https://excalidraw.com/)
-  - design / impl. / test
-  - put on example of doc sites
-  - update lesson learnt, cookbook, best practices
-  - WITH SVELTE - then set a repository for folks to do it in their own framework = BUZZ
-(the guy was not so friendly, and anyways it may be too much code to understand. Also not too much modality there. And not too much benefits of using machines.)
-- same thing with Oracle demo (more complete and nice!):
-  - https://www.oracle.com/webfolder/technetwork/jet-320/globalExamples-App-FixItFast.html (get the zip)
-(idea is good, but seems too complex -- hybrid app.... Interesting because makes think about how to breakdown UI in components (same machine) vs. processes (different machines). It is all about state visibility vs. behavior indepedence -- you don't want the indep. machine to be sensitive to event in first machine by mistake?)
-- demo with machine in worker only sending changed prop to DOM for rendering?
-(in the end no, that is too edge a case for the effort)
-- Suspense component in Svelte with compiled version
-  - including SuspenseList
-  - try to include page transitions too?
-(too simple a machine -- too much compiled code for it but the API was good though)
-- Do plyr popular video player (https://github.com/sampotts/plyr/blob/master/src/js/controls.js)
-  - not too sure anymore what was the interest but popular, very accessible
-(not too many modes here... bad example for a state machine modelization)
-- an example of parallel charts (https://tritarget.org/#Statechart%20based%20form%20manager) to do with multicasting events and Kingly
-(I actually don't understand the example, anywyas poor user interface, no docs, not worth my time)
-- don't do but modelize the popular flatpickr
-  - https://flatpickr.js.org/examples/#range-calendar
-  - I only have one mode which is when I can select a range of dates
-  - the rest is view logic, not behaviour in sense of a = f(e,s)
-    - because view = f(props) pure, there is no state hence no machine needed
-    - now the view can have ifs all as necessary, still don't need a machine
-    - and if we do by diff v = f(p), v + dv = f(p + dp); we have dp, we need dv, dv = h(dp) find h from f
-      - given f such as v = f(p) find h such that dv = h(dp)
-      - templates framework compute h for us
-      - render framwork too via reconciliation
-      - we can also do it by hand
-        - if we see dp as an event, then dv = h(dp) with h pure means that we have no state so no machine!
-(no machine needed here, no modality)
-
 # TODO
 - rewrite: for recruitment purposes
   - propertly the machine library
@@ -70,6 +11,7 @@
   - if I do a game, this one, it has actual modal states: https://github.com/jakesgordon/javascript-tiny-platformer
     - jumping while falling: ..., jumping while not falling: jump
   - Routing demo would be great to showcase dynamic import, i.e. lazy loading 
+  - good example of routing and animations :  https://github.com/sdras/page-transitions-travelapp
 - API
   - `TEST!`, document and release officially the version with state reset/backtracking etc. (createPureStateMachine)
     - haven't written a test to check that the history state is not modified between different execution of the pure machine
@@ -87,6 +29,9 @@
   - present kingly not as porable UI library but state machine library, that allows portable UI
     - so in docs, one part for machines, one part for UIs
   - add counter with Ink in react terminal in the docs!!
+  - doc site take it from there : https://github.com/alexkrolick/testing-library-docs
+    - or https://www.ably.io/documentation
+    - https://github.com/axefrog/docs
 - Playground
   - DSL format to design
   - DSL can be made with codemirror playground - cf. brave bookmark (bar, specs editor)
@@ -119,6 +64,14 @@
   - write medium article about it (different and much shorter)
   - LESSON LEARNT: look at all the if we removed, and how the behavior is more clear
     - we may find a bug: if you click on the canvas, tiny box and cannot be enlarged
+- MAYBE BPMN.io great for visualization of small stuff - admits nested processes
+  - must draw yourself the layout but thats fine
+  - then will have some work to map data-element-id to machine components but doable
+  - then style it to have a step-by-step debugger!!!! 
+  - allow create, load, and save of .bpmn file: perfect, put that in github.
+    - can I use a webpack loader?? raw-loader!! AMAZING    
+  - BUT can not fold compound states...
+- eshop nice demo (vue) : https://github.com/sdras/ecommerce-netlify /
 
 # Concepts
 - machine useful for stateful equation, if no state no machine
@@ -179,49 +132,12 @@
 - make article on when to model behavior with state machines -- and when not (InfoQ)
   - take some of my answers to gaeron tweet
 
-# Decision records
-- maybe add or pass a settings object to the command handler (passed if needed to command handlers)?
-  - this is for dependency injection - can have effects or commands more testable
-  - or leave it userland?
-  - but the effect handlers is already dependency injection!! Put all dependencies there even if they don't do effects!!
-=> NO! I can already pass necessary settings to command handlers via params
-
-- refactor away from prototype to allow event propagation:
-  - each state (compound or atomic) has an handling function
-  - that handling function in the case of a compound state is a regular transducer BUT if that transducer returns null then it applies the other relevant event handler at top level
-  - so a compound component is a regular inside function || outside function
-=> NO! simplicity first. And event forwarding does not help readability, also advised against by experts (can't find reference)
-
-
-# Editors
-- add bpmn.io!!! It has nesting. cf. /assets/diagram.bpmn.xml (it is a bpmn file though)
-  - compound states: subProcess
-  - atomic state: task
-  - startEvent: init event
-  - transition: sequenceFlow
-- that seems to be easier actually than yed
-- traverse the xml graph and create objects (all the transitions, create the hierarchy on the fly)
-- then massage the created objects into the desired objects
-- BUT! There is no history pseudo-states (maybe will have to add a custom element...)
-  - or use the data store reference (history is also stored so could work)
-- better for small graphs because it does not collapse compound states...
-  - which makes sense because if collapsed what layout show? if extended what layout show? 
-  - also big nodes, so harder to navigate in the end
-- could be worth doing in order to achieve some cross-promotion with camunda?? 
-
 # Now
--- the best adoption strategy is to have people play with it!! So IDE, textual language (see if I find online free graph editor), and playground...
-// Port Excalidraw to kingly -- would be great demo too
-// https://excalidraw.com/
-// modes with each drawing tool. Sub modes with locking tool
-// or maybe not - all of that could be done with a single giant state
-// drawing action = drawing command parameterized by the state
-// intead of changing the command itself...
-// So control states useful when such staet parametrization is not practical i.e. the reactive functions are too dissimilar
-/ TOP OF THE TOP: cf. https://components.studio/edit/mzK3QRdpQm6wl4JZBlGM
-// - have a left/right division
-// - left: tabs: code with textual language | guards | actions | effects exec | test seqs
-// - right: UML viz live updated with text lang | test viz (stories kind of) | pages (live comp) | Readme | Help
+- the best adoption strategy is to have people play with it!! So IDE, textual language (see if I find online free graph editor), and playground...
+ TOP OF THE TOP: cf. https://components.studio/edit/mzK3QRdpQm6wl4JZBlGM
+  - have a left/right division
+  - left: tabs: code with textual language | guards | actions | effects exec | test seqs
+  - right: UML viz live updated with text lang | test viz (stories kind of) | pages (live comp) | Readme | Help
 
   - zero values are used for action identity, and those are ([] and null), maybe future version add an option to change that
 // TODO: Courtesan: in content-courtesan.js change .kuker to .courtesan (but last)
@@ -247,106 +163,20 @@
      - also the machine level delegate data fetchign to handlers, so there can be handled caching, and waiting X ms to invalidate a cache (throttling essentially)
        - how to implement cancelation? if user clicks tab A -> download <A> fetch A data, then quickly clicks Tab B -> cancel A, do B 
 // TODO: I now allow initial transitions with multi target states. Check that the state-transducer-testing still works. Maybe add tests for it. 
-- other example of full app: https://github.com/TrillCyborg/fullstack
+- other example of full app: https://github.com/TrillCyborg/fullstack (dead link now...)
 - REMOVE render commands from REACT_STATE_DRIVEN!!!! put it in kingly!!! for dependency reasons
 - similar to what I want to do with actor/processes/cycle : 
   - https://medium.com/dailyjs/introducing-bloc-pattern-with-react-and-rxjs-40109665bb2
-- BPMN.io great for visualization - admits nested processes
-  - must draw yourself the layout but thats fine
-  - then will have some work to map data-element-id to machine components but doable
-  - then style it to have a step-by-step debugger!!!! 
-  - allow create, load, and save of .bpmn file: perfect, put that in github.
-    - can I use a webpack loader?? raw-loader!! AMAZING    
 - regex for tufte hexo tag: (\s*)(```)(tufte)\s+\n?([\s\S]+?)\s*(\2)(\n?|$)
-- URGENT: change code and tests!! so subject factory is replace by subject!!
-  - change makeWebComponentFromFsm in kingly
-  - change react-state-driven, vue-state-driven etc. and all examples...
-- could implement tracing with a proxy!! proxying the machien returned by createStateMachine!
-- extension to processes:
-  -         event
-  - input -> fsm -> output
-  -         event
-  - actually event -> input -> fsm -> output -> event !
-  - so for instance network request = command, which when executed is event
-  - response is event which when received is input
-  - so only difference is timing = scheduling, debouncing, delay etc.
-  - to have full picture, we need the function event -> input e.g. the connectors
-  - that is the only way to deal with concurrency/ similar to I/O automata
-- unload all these improvements in the issues directory of each
-  - add compositing of state machines. Outgoing links are parameterizable : target state, and 
-  condition/action, and events? whatever necessary to customize for the functionality -> similar 
-  to partial application!
-  - for insance debounce is timmer running <-> timer registering, and three parameters: query 
-  changed, display loading screen, and timer duration, -> similar to debounce(source, duration)
-    - it is debounce (event, duration, action); but that action may update the state of the outside
-- in react-state-driven, an improvement would be to have a render handler:: machineComponent, 
-renderWith, params, next, directUpdate with directUpdate:: (renderWithInstance, params, next) -> 
-Bool, so that returns false if no direct update. Then props update occurs on renderWith. Else 
-returns true. That means that the instance state is updated directly. Be careful that the 
-instance must exist for directUpdate to be called. TO THINK ABOUT 
-  - could also be include a decision function: updateStateOrProps:: params -> Boolean with 
-  directUpdate:: renderWithInstance, params, next -> () (don't forget postRenderCallback)
-- do proxx game from google, 
-  - https://github.com/GoogleChromeLabs/proxx
-  - https://proxx.app/
-  - have a section on modelization and show the state machines for it 
-  - no routing here : great! just skip the worker things
-  - and talk about it in some architecture section
-  - ADD a undo/redo that is sorely missing
-  - see if I do the animation or not
 - do a Vue doc contribution with the sparks example in Vue!!
 - CONTRACT: event emitter must be on microtask? so that event passed through the emitter are run 
 before other machine events are processed? can it also be immediate/synchronous?
-- shepherd - guiding user through app can be done with state machines: https://shipshapecode.github.io/shepherd/docs/welcome/
+- shepherd - guiding user through app can be done with state machines: https://shepherdjs.dev/
 - for tutorial/demo site use graph widget https://github.com/ui-router/visualizer 
-- write a nested router with fsm
-  - though it should rather be a higher order component wrapping the display component
-  - OnRoute(route, options, displayWith)
-  - so the on route would send an init event to displayWith? or? 
 - add more eventless tests
   - eventless <-> eventless with guards in both, and state modification
 - do the react version of password demo from the vue one
-- doc site take it from there : https://github.com/alexkrolick/testing-library-docs
-  - or https://www.ably.io/documentation
-  - https://github.com/axefrog/docs
-- testing - talk to gleb bahmutov so it puts in cypress somehow,
-  - cf. 
   
-- in future version test the traceFSM for errors, error should be goign in properties directly, no throwing
-- Demos
-  - boulderdash game!!
-  - eshop nice demo (vue) : https://github.com/sdras/sample-vue-shop / https://github.com/sdras/ecommerce-netlify
-    - example of multi-step process
-  - chess game
-    - https://raulsebastianmihaila.github.io/chess/ : https://github
-    .com/raulsebastianmihaila/chess-src THE BEST!!!
-  Programs : https://reactjsexample.com/chess-game-with-react-js/, https://www.techighness.com/post/develop-two-player-chess-game-with-react-js/
-    - use redux, supposedly super well written,
-    - none of them do check, checkmate, etc. probably because lots of if... so do it as a 
-    modification and write articles about it
-    - true chess with stock fish API but have server side... underwaterchess.com , https://www.reddit.com/r/reactjs/comments/53th5k/online_chess_made_with_react_and_redux/   
-    - then do chess with components to see how machines change with component (maintainability!!) https://github.com/vitogit/vue-chessboard-examples
-    -    or https://pusher.com/tutorials/realtime-chess-game-react (real time chat on top)
-    - or pacman : https://github.com/platzhersh/pacman-canvas, from https://superdevresources.com/open-source-html5-games/
-  - dinosaur google gam : simple and known abd linkable o twnsor flow
-    - https://cs.chromium.org/chromium/src/components/neterror/resources/offline.js?q=t-rex+package:%5Echromium$&dr=C&l=7
-    - https://github.com/Code-Bullet/Google-Chrome-Dino-Game-AI
-    - webstorm dir Genetic algorithm
-  - use https://itnext.io/a-wicked-custom-elements-alternative-6d1504b5857f to have web 
-  components without needing custom elements!!
-  - mario game : https://github.com/mahsu/MariOCaml/blob/master/director.ml and https://github.com/reasonml-community/Mareo 
-  - could also reuse shop microfrontends : https://micro-frontends.org/
-  - game demo with https://codeincomplete.com/posts/javascript-gauntlet-foundations/, also boulder 
-    dash
-  - simple game demo : snake with ivi
-     - https://github.com/localvoid/ivi-examples/tree/master/packages/apps/snake
-  - good example of routing and animations : https://page-transitions.com/, https://github.com/sdras/page-transitions-travelapp
-  - maybe this https://buttercms.com/blog/build-a-beautiful-animated-news-app-with-vuejs-and-vuetify
-    - LOW PRIORITY - but good as a Vue example and also adding states to the fetch (handling errors)
-    which are not in the current version
-    - THIS absolutely : music player!! https://github
-    .com/Upmostly/react-use-context-hook/blob/master/src/hooks/useMusicPlayer.js ??
-
 - Promote
   - finish react-state-driven then vue-state-driven
   - vue-state-driven to put in awesome vue : https://github.com/sdras/awesome-vue
@@ -356,7 +186,7 @@ before other machine events are processed? can it also be immediate/synchronous?
     - https://github.com/localvoid/ivi/tree/master/packages/ivi, https://github.com/localvoid/ivi#apps
   - put in svelte awesome : https://github.com/sveltejs/awesome 
 
-- also for webcomponenets README https://html.spec.whatwg.org/multipage/custom-elements.html#custom-element-conformance 
+- also for webcomponents README https://html.spec.whatwg.org/multipage/custom-elements.html#custom-element-conformance 
 - do the webcomponent wih a rendr property customizable
 - add a tutorial section in README:
   - modelization (show graph)
@@ -372,12 +202,6 @@ state at that target (cf. previous)
 - DOC the generator state in the testing generator
 - test new version with iterator of graph-adt 0.8.1!
 - DOC if outputs wants to output an array as outputs how to do it : [Array]! DOC it
-- think about debugger for state machine - basically a UI around traceFSM
-  - could use http://wso2.github.io/VizGrammar/samples/ to dynamically update the graph
-    - remains to be seen how to add interactivity (event handling) to the graph though
-  - that is the best way to explain the state machine behavior!!
-  - review the format for the visualizer
-  - need to find a way to outline the current control state
 - think about using the test generator for proprty-based testing
   - for instance any valid test case must respect invariant : no invalid input
     - that might have found the bug we found
@@ -399,19 +223,6 @@ error is ...[0] is undefined. That means an event was sent and could not be hand
  machine
  
  # Roadmap
- - version 1.X for entry actions and exit actions
- // TODO: analyze edge case : I pile on entry transitions decorateEntry(decorateEntry(...))
- // - what happens if same entry transition twice? should be ok, same order, both will apply, write a test
- // NO!! A -ev-> B ACT1
- // NO!! Entry B : ACT2
- // NO!! Entry B : ACT3
- // decorate(ACT2, decorate(ACT3, ...) -> [ACT1, ACT3, ACT2]!!
- // test and DOC it (but that should be another version right?) maybe include in this one after all
- // TODO : DOC that decorated actions should also be tryCatch separately for better error tracking - otherwise the
- // error will be caught, but it will not be possible to identify which action (transition or decorated) caused the
- // problem
-- would be good to have a `reset` function which puts the machine back in starting position and 
- returns a clone of it.
 - would be good a function `clone` which returns a new state machine, with the same state as the 
  current one
 - ROADMAP : DSL with parser (check my gmail) like http://blog.efftinge
@@ -477,33 +288,7 @@ library
   - expected run here [Imgur](https://i.imgur.com/Lei0BcM.png)
   - all info in pdf AN_Crash_Course_in_UML_State_Machines
 
-# Didactic
-- implement auto-complete field with state machines
-  - will use history states and pre-emption (cancelling tasks)
-- implement a page with two autocomplete fields, and which returns availability of, say, seats,
-provided the autocomplete fields fulfill some validity rules (part of a given list) orig-dest
-  - shows how to reuse a graph into another one?? to check
-  - that will show benefits of hierarchical state machines
-- then move to multi-step workflow full example
-- could show auto-complete example in react with same library
-- could show auto-complete example in angular with same library
-LOTS OF WORK
-do the design on spare time but work rather on the dev tool!!! that is the killing thing
-
-# to think about
-- modelling tool for visual DSL!! https://github.com/webgme/webgme
-- already one exists for state machines. Complex but already exists. Would be good to have a
-plugin to exchange format between the two!! That way I don't have to do a tracer myself!.!.!
-- compiler to js : spec -> js code
-
-# NOTE
-you can remove some guards by giving them different event names and generating those. That is if
-you can access the data which serve to compute the guard at event triggering time!!
-
-# Trivia
-- example of game state machine (tetris) : https://www.colinfahey.com/tetris/tetris.html?utm_source=ponyfoo+weekly&utm_medium=email&utm_campaign=146
-
-#testing
+# Testing
 The FSM can be used to generate test cases fulfilling test
 covers. There exists a set of desirable properties for the testing
 of FSMs. Action Coverage is defined as the desirable property
