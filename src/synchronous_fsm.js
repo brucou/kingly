@@ -609,7 +609,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
       }
       catch (e) {
         if (e instanceof KinglyError) {
-          // We don't break the program, but we can't continue as nothing happened: we return the error
+          // We don't break the program, but we can't continue as if nothing happened: we return the error
           tracer({
             type: ERROR_MSG,
             trace: {
@@ -658,6 +658,15 @@ export function createStateMachineAPIs(fsmDef, settings) {
       }
       // run the machine
       const outputs = fsmAPIs.withProtectedState(input);
+      // NOTE: history does not need to be cloned here!
+      // The updateHistory function does not modify history but returns a new one
+      // There is thus no risk of accidentally modifying the history of another machine
+      // TODO: We should however definitely clone `extendedState` How to modify the API?
+      // Require a clone function in settings? with a default of JSON.stringify?
+      // or we shift the responsibility on the API user to do the cloning?
+      // Good: faster in the default case, simpler library too, no cloning when not needed
+      // Bad: library user can forget, so footgun...
+      // ADR: API that forces to signal a clone function, which can be DEFAULT_CLONE
       return {outputs, fsmState: {cs: getCurrentControlState(), hs:history, es:extendedState}}
     }
   };

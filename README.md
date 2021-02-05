@@ -37,7 +37,7 @@ Salient features:
 
 - **small size**: implementation treeshakeable to 5KB core, [compilable to 1KB-2KB](https://github.com/brucou/slim)
 - **small API**: one function for the state machine
-- **just a function!**: easy to integrate into any front-end framework
+9- **just a function!**: easy to integrate into any front-end framework
 
 # Documentation
 All documentation can be accessed in the [dedicated web site](https://brucou.github.io/documentation/).

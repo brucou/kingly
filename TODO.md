@@ -1,83 +1,4 @@
-# TODO
-- beware that history states must not be updated in place  
-- DSL can be made with codemirror playground - cf. brave bookmark (bar, specs editor)
-- do the createPureStateMachine also in compiler
-- if I do a game, this one, it has actual modal states: https://github.com/jakesgordon/javascript-tiny-platformer
-  - jumping while falling: ..., jumping while not falling: jump
-- present kingly not as porable UI library but state machine library, that allows portable UI
-  - so in docs, one part for machines, one part for UIs
-- add counter with Ink in react terminal in the docs!!
-- DOC!!!! event not accepted by machine => null, event accepted but no guard fulfilled => [null,...]
-- DROP everything and do cypress demo! https://github.com/cypress-io/cypress-realworld-app
-- same thing with Oracle demo (more complete and nice!):
-  - https://www.oracle.com/webfolder/technetwork/jet/globalExamples-App-FixItFast.html (get the zip)
-- cculd be a terrific demo (from SAP, code is there with UI5 as example)
-  - https://openui5.hana.ondemand.com/test-resources/sap/m/demokit/cart/webapp/index.html?sap-ui-theme=sap_fiori_3#/checkout 
-- Finish Realworld demo design and impl.
-  - write new impl
-  - add doc (don't remove existing for now)
-  - write infoq article about it
-  - write medium article about it (different and much shorter)
-  - LESSON LEARNT: look at all the if we removed, and how the behavior is more clear
-    - we may find a bug: if you click on the canvas, tiny box and cannot be enlarged
-- I could also redo the wizard form example!!
-  - same, first
-  - then with better looks
-- Do excalidraw example (React, https://excalidraw.com/)
-  - design / impl. / test
-  - put on example of doc sites
-  - update lesson learnt, cookbook, best practices
-  - WITH SVELTE - then set a repository for folks to do it in their own framework = BUZZ
-- textual format to design
-  - convert to UML
-- codesandbox with user interface text area (for graphml conent), other tab is states, events, transitions (with fake names)
-- state machine component IDE (cf. https://components.studio/edit/mzK3QRdpQm6wl4JZBlGM)
-  - text format taken from BDD (chevrotain)
-      GIVEN <string> "<control state>" <string>
-      -- complex
-      WHEN <string> "<event>" <string> {
-        <pred> => <target state> : <fn>
-        <pred> => <target state> : <fn>
-      }
-      -- simple
-      WHEN <string> "<event>" <string> => <target state> : <fn>
-      -- eventless
-      WHEN <string> "<event>" <string> => <target state> : <fn>
-      but guards would maybe fit more in GIVEn in BDD?
-  - tab for actions
-  - tab for guards
-  - tab for effects
-  - tab for stories (which are simply tests...)
-  - tab for PBT (maybe a generator language to design too)
-    - see how we can derive that from the BDD-like text format
-- demo with web component logic with sm - short size when compiled? TMDB app?
-- demo with machine in worker only sending changed prop to DOM for rendering?
-- demo compiling to TypeScript, Elm, Rust, Go?
-- Routing demo would be great to showcase dynamic import, i.e. lazy loading 
-- Suspense component in Svelte with compiled version
-  - including SuspenseList
-  - try to include page transitions too?
-- Do plyr popular video player (https://github.com/sampotts/plyr/blob/master/src/js/controls.js)
-  - not too sure anymore what was the interest but popular, very accessible
-- an example of parallel charts (https://tritarget.org/#Statechart%20based%20form%20manager) to do with multicasting events and Kingly
-- don't do but modelize the popular flatpickr
-  - https://flatpickr.js.org/examples/#range-calendar
-  - I only have one mode which is when I can select a range of dates
-  - the rest is view logic, not behaviour in sense of a = f(e,s)
-    - because view = f(props) pure, there is no state hence no machine needed
-    - now the view can have ifs all as necessary, still don't need a machine
-    - and if we do by diff v = f(p), v + dv = f(p + dp); we have dp, we need dv, dv = h(dp) find h from f
-      - given f such as v = f(p) find h such that dv = h(dp)
-      - templates framework compute h for us
-      - render framwork too via reconciliation
-      - we can also do it by hand
-        - if we see dp as an event, then dv = h(dp) with h pure means that we have no state so no machine!
-
-# Concepts
-- machine useful for stateful equation, if no state no machine
-- new control state useful to show that variation
-- machine makes a lot of sense if computation methods changes a lot per control state
-  - so much that that variation cannot be contained in a variable, or not usefully
+# Done
 - we thus have a lot of control states with a lot of events circling to the same origin state
   - the visualization does not help, we need other ways to indicate what pieces of state are modified in these cases
   - also need to condensate the visualization somewhat to avoid a ton of circles
@@ -96,11 +17,120 @@
 | e[g]/a
 ```
 
+
+# Rejected
+- Do leonardo.io (vanilla JS should be the simplest to reimplement)
+  - but does not demonstrate so much about benefits? just a nice demo?
+  - (use D3, use popup/modals, use component (color picker) etc)
+=> NO! Leonardo already written without framework, and there is almost to no modes, so value of state machines is little
+- Do excalidraw example (React, https://excalidraw.com/)
+  - design / impl. / test
+  - put on example of doc sites
+  - update lesson learnt, cookbook, best practices
+  - WITH SVELTE - then set a repository for folks to do it in their own framework = BUZZ
+(the guy was not so friendly, and anyways it may be too much code to understand. Also not too much modality there. And not too much benefits of using machines.)
+- same thing with Oracle demo (more complete and nice!):
+  - https://www.oracle.com/webfolder/technetwork/jet-320/globalExamples-App-FixItFast.html (get the zip)
+(idea is good, but seems too complex -- hybrid app.... Interesting because makes think about how to breakdown UI in components (same machine) vs. processes (different machines). It is all about state visibility vs. behavior indepedence -- you don't want the indep. machine to be sensitive to event in first machine by mistake?)
+- demo with machine in worker only sending changed prop to DOM for rendering?
+(in the end no, that is too edge a case for the effort)
+- Suspense component in Svelte with compiled version
+  - including SuspenseList
+  - try to include page transitions too?
+(too simple a machine -- too much compiled code for it but the API was good though)
+- Do plyr popular video player (https://github.com/sampotts/plyr/blob/master/src/js/controls.js)
+  - not too sure anymore what was the interest but popular, very accessible
+(not too many modes here... bad example for a state machine modelization)
+- an example of parallel charts (https://tritarget.org/#Statechart%20based%20form%20manager) to do with multicasting events and Kingly
+(I actually don't understand the example, anywyas poor user interface, no docs, not worth my time)
+- don't do but modelize the popular flatpickr
+  - https://flatpickr.js.org/examples/#range-calendar
+  - I only have one mode which is when I can select a range of dates
+  - the rest is view logic, not behaviour in sense of a = f(e,s)
+    - because view = f(props) pure, there is no state hence no machine needed
+    - now the view can have ifs all as necessary, still don't need a machine
+    - and if we do by diff v = f(p), v + dv = f(p + dp); we have dp, we need dv, dv = h(dp) find h from f
+      - given f such as v = f(p) find h such that dv = h(dp)
+      - templates framework compute h for us
+      - render framwork too via reconciliation
+      - we can also do it by hand
+        - if we see dp as an event, then dv = h(dp) with h pure means that we have no state so no machine!
+(no machine needed here, no modality)
+
+# TODO
+- rewrite: for recruitment purposes
+  - propertly the machine library
+  - rewrite the test also to be more understandable (with graphs??)
+- Examples
+  - I could also redo the wizard form example!!
+    - same, first
+    - then with better looks
+  - cculd be a terrific demo (from SAP, code is there with UI5 as example)
+    - https://openui5.hana.ondemand.com/test-resources/sap/m/demokit/cart/webapp/index.html?sap-ui-theme=sap_fiori_3#/checkout
+  - if I do a game, this one, it has actual modal states: https://github.com/jakesgordon/javascript-tiny-platformer
+    - jumping while falling: ..., jumping while not falling: jump
+  - Routing demo would be great to showcase dynamic import, i.e. lazy loading 
+- API
+  - `TEST!`, document and release officially the version with state reset/backtracking etc. (createPureStateMachine)
+    - haven't written a test to check that the history state is not modified between different execution of the pure machine
+    - on an hierarchical/non machine: one pure machine run with history change -> state1. reset run-> state 2. state2 === state1
+    - on an hierarchical/non machine: one pure machine run with history change -> state1. event [guard1]-> state 2. state1 back with ext state passing guard2 event[guard2]-> state 3. All this with history change. state 2. transition to H*. state3 transition to H*.
+      - check history states are what they should be. Rather check that the right actions are run -- thats history-implementation independent
+    - on an hierarchical/non machine: one pure machine run -> state1. event1 -> state 2 (modify ext state1). back to state1 and event2 -> state 3 (modify ext state1).
+      - state 2 and state 3: no overwriting
+  - do the createPureStateMachine also in compiler
+  - demo with web component logic with sm - short size when compiled? TMDB app?
+    - add back the web component API in the code? and doc it?
+  - compile to TypeScript, Elm, Rust, Go, Python?
+- DOC
+  - DOC!!!! event not accepted by machine => null, event accepted but no guard fulfilled => [null,...]
+  - present kingly not as porable UI library but state machine library, that allows portable UI
+    - so in docs, one part for machines, one part for UIs
+  - add counter with Ink in react terminal in the docs!!
+- Playground
+  - DSL format to design
+  - DSL can be made with codemirror playground - cf. brave bookmark (bar, specs editor)
+  - codesandbox with user interface text area (for graphml conent), other tab is states, events, transitions (with fake names)
+  - state machine component IDE (cf. https://components.studio/edit/mzK3QRdpQm6wl4JZBlGM)
+    - text format taken from BDD (chevrotain)
+      GIVEN <string> "<control state>" <string>
+      -- complex
+      WHEN <string> "<event>" <string> {
+        <pred> => <target state> : <fn>
+        <pred> => <target state> : <fn>
+      }
+      -- simple
+      WHEN <string> "<event>" <string> => <target state> : <fn>
+      -- eventless
+      WHEN <string> "<event>" <string> => <target state> : <fn>
+      but guards would maybe fit more in GIVEn in BDD?
+  - tab for actions
+  - tab for guards
+  - tab for effects
+  - tab for stories (which are simply tests...)
+  - tab for PBT (maybe a generator language to design too)
+    - see how we can derive that from the BDD-like text format
+- beware that history states must not be updated in place  
+- DROP everything and do cypress demo! https://github.com/cypress-io/cypress-realworld-app
+- Finish Realworld demo design and impl.
+  - write new impl
+  - add doc (don't remove existing for now)
+  - write infoq article about it
+  - write medium article about it (different and much shorter)
+  - LESSON LEARNT: look at all the if we removed, and how the behavior is more clear
+    - we may find a bug: if you click on the canvas, tiny box and cannot be enlarged
+
+# Concepts
+- machine useful for stateful equation, if no state no machine
+  - new control state useful to show that variation
+  - machine makes a lot of sense if computation methods changes a lot per control state
+    - so much that that variation cannot be contained in a variable, or not usefully
+
 # Cookbook
 - modals
   - usually leave to another compound state and return with history
 
-# Think
+# Roadmap
 - most applications will have a lot of X -> X transitions as they do not have a lot of modes. In that case, it may be importeant to understand the state updates happening to reason about the program
   - a graph which display those would be great: DO SOME RESEARCH of prior art
   - machine state is a tree: DRAW THAT
@@ -113,7 +143,7 @@
 - reset and backtrack and clone fucntions NOT on the function object mais imported (tree-shakeable) and going to access values on the machine function object. That's better. Also backtracking only possible if machine has been created with `save history` setting. and backtracking returns a cloned machine, does not update in place. may mean I need a way to clone state, so cloneState should also be in settings, like updateState
   - NO! Now I compile, so I can have non-tree-shakeable impl. More important than breaking code. Or have a new API, createCloneableFsm so I don't break
 
-# Doc
+# DOC
 - take a page from nearley docs: 1. this, 2. that... it is short and very explicit, can use at very first before details
 - put that quote somewhere (Bob Martin)
   - BDD are state machiens (2008!!): https://sites.google.com/site/unclebobconsultingllc/the-truth-about-bdd
@@ -146,8 +176,8 @@
   - maybe put use cases (if there are 3 of them) on the top entry page
 
 # Articles
-- make article on stop coupling ui and logic!
-- make article on testing - using the chess as an example
+- make article on when to model behavior with state machines -- and when not (InfoQ)
+  - take some of my answers to gaeron tweet
 
 # Decision records
 - maybe add or pass a settings object to the command handler (passed if needed to command handlers)?
@@ -162,10 +192,6 @@
   - so a compound component is a regular inside function || outside function
 => NO! simplicity first. And event forwarding does not help readability, also advised against by experts (can't find reference)
 
-- Do leonardo.io (vanilla JS should be the simplest to reimplement)
-  - but does not demonstrate so much about benefits? just a nice demo?
-  - (use D3, use popup/modals, use component (color picker) etc)
-=> NO! Leonardo already written without framework, and there is almost to no modes, so value of state machines is little
 
 # Editors
 - add bpmn.io!!! It has nesting. cf. /assets/diagram.bpmn.xml (it is a bpmn file though)
