@@ -1,3 +1,4 @@
+//@ts-check
 import {
   ACTION_IDENTITY,
   AUTO_EVENT, DEBUG_MSG,
