@@ -28,9 +28,10 @@ import {
   isHistoryControlState,
   keys, KinglyError,
   updateHistory,
-  wrap
+  wrap,
+  throwKinglyErrorFactory, wrapUpdateStateFn, getCurrentControlState
 } from "./helpers";
-import {fsmContractChecker} from "./contracts"
+import {runContracts} from "./contracts"
 
 function alwaysTrue() {
   return true
@@ -38,9 +39,8 @@ function alwaysTrue() {
 
 /**
  * Processes the hierarchically nested states and returns miscellaneous objects derived from it:
- * `is_group_state` : {Object<String,Boolean>} Hash whose properties (state names) are matched with
- * whether that state is a nested state
- * `hash_states` : Hierarchically nested object whose properties are the nested states.
+ * `is_group_state`: Hash matching keys (state names) to whether that state is a nested state
+ * `hash_states`: Hierarchically nested object whose properties are the nested states.
  * - Nested states inherit (prototypal inheritance) from the containing state.
  * - Holds a `history` property which holds a `last_seen_state` property which holds the latest
  * state for that hierarchy group For instance, if A < B < C and the state machine leaves C for a
@@ -51,9 +51,9 @@ function alwaysTrue() {
  * `states.history` {Object<String,Function>} : Hash which maps every state name with a function
  * whose name is the state name
  * @param states
- * @returns {{hash_states: {}, is_group_state: {}}}
+ * @returns {{hash_states: {}, is_group_state: Object<String,Boolean>}}
  */
-function build_nested_state_structure(states) {
+function buildNestedStateStructure(states) {
   const root_name = "State";
   let hash_states = {};
   let is_group_state = {};
@@ -120,12 +120,24 @@ export function normalizeTransitions(fsmDef) {
   }
 }
 
+/**
+ *
+ * @param {FSM_Def} fsmDef
+ * @param {FSM_Settings} settings
+ * @returns {Error | Stateful_FSM}
+ */
 export function createStateMachine(fsmDef, settings) {
   const res = createStateMachineAPIs(fsmDef, settings);
   if (res instanceof Error) return res
     else return res.withProtectedState
 }
 
+/**
+ *
+ * @param {FSM_Def} fsmDef
+ * @param {FSM_Settings} settings
+ * @returns {Error | Pure_FSM}
+ */
 export function createPureStateMachine(fsmDef, settings) {
   const res = createStateMachineAPIs(fsmDef, settings);
   if (res instanceof Error) return res
@@ -137,11 +149,11 @@ export function createPureStateMachine(fsmDef, settings) {
  * extended state for the machine is included in the machine definition.
  * @param {FSM_Def} fsmDef
  * @param {FSM_Settings} settings
- * @return {{withProtectedState: function(input), withPureState: function(input, fsmState)}}|Error
+ * @return {{withProtectedState: Stateful_FSM, withPureInterface: Pure_FSM}|Error}
  */
 export function createStateMachineAPIs(fsmDef, settings) {
   const {
-    states: control_states,
+    states: controlStates,
     events,
     // transitions ,
     initialExtendedState,
@@ -151,285 +163,72 @@ export function createStateMachineAPIs(fsmDef, settings) {
   const checkContracts = debug && debug.checkContracts || void 0;
   let console = debug && debug.console || emptyConsole;
   let tracer = devTool && devTool.tracer || emptyTracer;
-  const throwKinglyError = obj => {
-    throw new KinglyError(obj, console, tracer)
-  };
+  const throwKinglyError = throwKinglyErrorFactory(console, tracer);
 
-  // Conracts must be checked before we start doing all sort of computations
-  if (checkContracts) {
-    const {failingContracts} = fsmContractChecker(fsmDef, settings, checkContracts);
-    try {
-      if (failingContracts.length > 0) throwKinglyError({
-        when: `Attempting to create a Kingly machine`,
-        location: `createStateMachine`,
-        info: {fsmDef, settings, failingContracts},
-        message: `I found that one or more Kingly contracts are violated!`
-      })
-    }
-    catch (e) {
-      // Do not break the program, errors should be passed to console and dev tool
-      tracer({
-        type: MACHINE_CREATION_ERROR_MSG,
-        trace: {
-          info: e.errors,
-          message: e.message,
-          machineState: {cs: undefined, es: initialExtendedState, hs: undefined}
-        }
-      });
-      return e
-    }
+  // Check contracts if the API user wants to,
+  // but don't throw errors, return them and possibly log them
+  if (checkContracts){
+    const e = runContracts({fsmDef, settings}, checkContracts, {throwKinglyError, tracer});
+    if (e instanceof Error) return e
   }
 
-  const wrappedUpdateState = (extendedState, updates) => {
-    const fnName = userProvidedUpdateStateFn.name || userProvidedUpdateStateFn.displayName || "";
-
-    try {
-      return userProvidedUpdateStateFn(extendedState, updates)
-    }
-    catch (e) {
-      throwKinglyError({
-        when: `Executing updateState function ${fnName}`,
-        location: `createStateMachine > wrappedUpdateState`,
-        info: {extendedState, updates},
-        message: e.message,
-        stack: e.stack,
-      })
-    }
-  };
+  // Wrap user-provided update state function to capture errors
+  const wrappedUpdateState = wrapUpdateStateFn(userProvidedUpdateStateFn, {throwKinglyError, tracer});
+  // We also massage the shape of the user-provided transitions,
+  // unifying the two ways of providing an initial state for the machine
   const transitions = normalizeTransitions(fsmDef);
 
-  // Create the nested hierarchy
-  const hash_states_struct = build_nested_state_structure(control_states);
-
-  // This will be the extended state object which will be updated by all actions and on which conditions
-  // will be evaluated It is safely contained in a closure so it cannot be accessed in any way
-  // outside the state machine.
-  // Note the extended state is modified by the `settings.updateState` function, which should not modify
-  // the extended state object. There is hence no need to do any cloning.
-  let extendedState = initialExtendedState;
-
-  // history maps
-  const {stateList, stateAncestors} = computeHistoryMaps(control_states);
-  let history = initHistoryDataStructure(stateList);
-
-  // @type {Object<state_name,boolean>}, allows to know whether a state has a init transition defined
+  // Create auxiliary data structures to quickly answer common queries:
+  // - is `stateName` a state that has an initial transition configured
+  //   (top-level, or compound state) : `is_init_state[stateName]`
+  // - is `stateName` a transient state, i.e. with an configured
+  //   initial or eventless transitions: `is_auto_state[stateName]`
+  // - is `stateName` a compound state: `is_group_state[stateName]`
+  // - what computation to run in `stateName`:
+  //   `hash_states[stateName][event]` has the event handler for `event`
+  // NOTE: we use JS prototypal inheritance to make this work even when
+  // A < ... < B. and the event handler in configured on parent A, and not on B
+  // When the machine is in state B, it must answer to the event as A would
+  // - what control state is the machine in:
+  //   `hash_states[INIT_STATE].current_state_name`
+  const hash_states_struct = buildNestedStateStructure(controlStates);
+  // @type {Object<state_name,boolean>}
   let is_init_state = {};
   // @type {Object<state_name,boolean>}, allows to know whether a state has an automatic transition defined
   // that would be init transitions + eventless transitions
   let is_auto_state = {};
-  // @type {Object<state_name,boolean>}, allows to know whether a state is a group of state or not
+  // @type {Object<state_name,boolean>}
   const is_group_state = hash_states_struct.is_group_state;
   let hash_states = hash_states_struct.hash_states;
 
-  function assertContract(contract, arrayParams) {
-    const hasFailed = assert(contract, arrayParams);
-    if (checkContracts && hasFailed) {
-      throwKinglyError(hasFailed)
-    }
-
-    return void 0
-  }
-
-  function getCurrentControlState() {
-    return hash_states[INIT_STATE].current_state_name
-  }
-
-  function send_event(event_struct, isExternalEvent) {
-    assertContract(isEventStruct, [event_struct]);
-
-    const {eventName, eventData} = destructureEvent(event_struct);
-    const current_state = getCurrentControlState();
-
-    console.debug("send event", event_struct);
-
-    // Edge case : INIT_EVENT sent and the current state is not the initial state
-    // We have to do this separately, as by construction the INIT_STATE is a
-    // super state of all states in the machine. Hence sending an INIT_EVENT
-    // would always execute the INIT transition by prototypal delegation
-    if (isExternalEvent && eventName === INIT_EVENT && current_state !== INIT_STATE) {
-      tracer({
-        type: WARN_MSG,
-        trace: {
-          info: {eventName, eventData},
-          message: `The external event INIT_EVENT can only be sent when starting the machine!`,
-          machineState: {cs: current_state, es: extendedState, hs: history}
-        }
-      });
-      console.warn(`The external event INIT_EVENT can only be sent when starting the machine!`)
-
-      return null
-    }
-
-    const outputs = process_event(
-      hash_states_struct.hash_states,
-      eventName,
-
-      eventData,
-      extendedState
-    );
-
-    return outputs
-  }
-
-  function process_event(hash_states, event, event_data, extendedState) {
-    const current_state = hash_states[INIT_STATE].current_state_name;
-    const event_handler = hash_states[current_state][event];
-
-    if (event_handler) {
-      // CASE : There is a transition associated to that event
-      console.log("found event handler!");
-      console.info("WHEN EVENT ", event, event_data);
-      /* OUT : this event handler modifies the extendedState and possibly other data structures */
-      const {stop, outputs: rawOutputs} = event_handler(extendedState, event_data, current_state);
-      debug && !stop && console.warn("No guards have been fulfilled! We recommend to configure guards explicitly to" +
-        " cover the full state space!")
-      const outputs = arrayizeOutput(rawOutputs);
-
-      // we read it anew as the execution of the event handler may have changed it
-      const new_current_state = hash_states[INIT_STATE].current_state_name;
-
-      // Two cases here:
-      // 1. Init handlers, when present on the current state, must be acted on immediately
-      // This allows for sequence of init events in various state levels
-      // For instance, L1: init -> L2:init -> L3:init -> L4: stateX
-      // In this case event_data will carry on the data passed on from the last event (else we loose
-      // the extendedState?)
-      // 2. transitions with no events associated, only conditions (i.e. transient states)
-      // NOTE : the guard is to defend against loops occuring when an AUTO transition fails to advance and stays
-      // in the same control state!! But by contract that should never happen : all AUTO transitions should advance!
-      // TODO : test that case, what is happening? I should add a branch and throw!!
-      if (is_auto_state[new_current_state] && new_current_state !== current_state) {
-        // CASE : transient state with no triggering event, just conditions
-        // automatic transitions = transitions without events
-        const auto_event = is_init_state[new_current_state]
-          ? INIT_EVENT
-          : AUTO_EVENT;
-
-        tracer({
-          type: INTERNAL_INPUT_MSG,
-          trace: {
-            info: {eventName: auto_event, eventData: event_data},
-            event: {[auto_event]: event_data},
-            machineState: {cs: getCurrentControlState(), es: extendedState, hs: history}
-          }
-        });
-
-        const nextOutputs = send_event({[auto_event]: event_data}, false);
-
-        tracer({
-          type: INTERNAL_OUTPUTS_MSG,
-          trace: {
-            outputs: nextOutputs,
-            machineState: {cs: getCurrentControlState(), es: extendedState, hs: history}
-          }
-        });
-
-        return [].concat(outputs).concat(nextOutputs);
-      } else return outputs;
-    } else {
-      // CASE : There is no transition associated to that event from that state
-      console.warn(`There is no transition associated to the event |${event}| in state |${current_state}|!`);
-      tracer({
-        type: WARN_MSG,
-        trace: {
-          info: {received: {[event]: event_data}},
-          message: `There is no transition associated to the event |${event}| in state |${current_state}|!`,
-          machineState: {cs: current_state, es: extendedState, hs: history}
-        }
-      });
-
-      return null;
-    }
-  }
-
-  function leave_state(from, extendedState, hash_states) {
-    // NOTE : extendedState is passed as a parameter for symetry reasons, no real use for it so far
-    const state_from = hash_states[from];
-    const state_from_name = state_from.name;
-
-    history = updateHistory(history, stateAncestors, state_from_name);
-
-    console.info("left state", wrap(from));
-  }
-
-  function enter_next_state(to, updatedExtendedState, hash_states) {
-    let state_to;
-    let state_to_name;
-    // CASE : history state (H)
-    if (isHistoryControlState(to)) {
-      const history_type = to.deep ? DEEP : to.shallow ? SHALLOW : void 0;
-      const history_target = to[history_type];
-      // Edge case : history state (H) && no history (i.e. first time state is entered), target state
-      // is the entered state
-      // TODO: edge case should be init state for compound state, and check it is recursively descended,
-      // and error if the history target is an atomic state
-      // if (!is_auto_state(history_target)) throw `can't be atomic state`
-      // then by setting the compound state, it should evolve toward to init control state naturally
-      debug && console && !is_init_state[history_target] && console.error(`Configured a history state which does not relate to a compound state! The behaviour of the machine is thus unspecified. Please review your machine configuration`);
-      state_to_name = history[history_type][history_target] || history_target;
-      state_to = hash_states[state_to_name];
-    }
-    else if (to) {
-      // CASE : normal state
-      state_to = hash_states[to];
-      state_to_name = state_to.name;
-    } else {
-      throwKinglyError ("enter_state : unknown case! Not a state name, and not a history state to enter!");
-    }
-    hash_states[INIT_STATE].current_state_name = state_to_name;
-
-    tracer({
-      type: DEBUG_MSG,
-      trace: {
-        message: isHistoryControlState(to)
-          ? `Entering history state for ${to[to.deep ? DEEP : to.shallow ? SHALLOW : void 0]}`
-          : `Entering state ${to}`,
-        machineState: {cs: getCurrentControlState(), es: extendedState, hs: history}
-      }
-    });
-    debug && console.info("AND TRANSITION TO STATE", state_to_name);
-    return state_to_name;
-  }
-
-  function start() {
-    tracer({
-      type: INIT_INPUT_MSG,
-      trace: {
-        info: {eventName: INIT_EVENT, eventData: initialExtendedState},
-        event: {[INIT_EVENT]: initialExtendedState},
-        machineState: {cs: getCurrentControlState(), es: extendedState, hs: history}
-      }
-    });
-
-    return send_event({[INIT_EVENT]: initialExtendedState}, true);
-  }
-
+  // Fill in the auxiliary data structures
   transitions.forEach(function (transition) {
     let {from, to, action, event, guards: arr_predicate} = transition;
-    // CASE : ZERO OR ONE condition set
+    // CASE: ZERO OR ONE condition set
     if (!arr_predicate)
       arr_predicate = [{predicate: void 0, to: to, action: action}];
 
-    // CASE : transition has a init event
-    // NOTE : there should ever only be one, but we don't enforce it here
+    // CASE: transition has a init event
+    // NOTE: there should ever only be one, but we don't enforce it here
     if (event === INIT_EVENT) {
       is_init_state[from] = true;
     }
 
     let from_proto = hash_states[from];
 
-    // CASE : automatic transitions : no events - likely a transient state with only conditions
+    // CASE: automatic transitions: no events - likely a transient state with only conditions
     if (!event) {
       event = AUTO_EVENT;
       is_auto_state[from] = true;
     }
-    // CASE : automatic transitions : init event automatically fired upon entering a grouping state
+    // CASE: automatic transitions : init event automatically fired upon entering a grouping state
     if (is_group_state[from] && is_init_state[from]) {
       is_auto_state[from] = true;
     }
 
     // NTH: this seriously needs refactoring, that is one line in ramda
-    from_proto[event] = arr_predicate.reduce((acc, guard, index) => {
+    from_proto[event] = arr_predicate.reduce(
+      (acc, guard, index) => {
         const action = guard.action || ACTION_IDENTITY;
         const actionName = action.name || action.displayName || "";
         const condition_checking_fn = (function (guard, settings) {
@@ -564,6 +363,17 @@ export function createStateMachineAPIs(fsmDef, settings) {
     );
   });
 
+  // Setting up the initial state of the machine in closure
+  // That is the control state, history state, and extended state
+  // The control state is kept in hash_states, rather than a dedicated variable
+  // NOTE: the user-provided update function by contract cannot update in place
+  // There is thus no need to clone the initial extended state.
+  const {stateList, stateAncestors} = computeHistoryMaps(controlStates);
+  let history = initHistoryDataStructure(stateList);
+  let extendedState = initialExtendedState;
+
+  // Run the machine's initial transition so it positions itself
+  // in the configured control state
   try {
     start();
   }
@@ -581,11 +391,16 @@ export function createStateMachineAPIs(fsmDef, settings) {
   }
 
   const fsmAPIs = {
-  // NOTE : yield is a reserved JavaScript word so using yyield
-    withProtectedState:   function yyield(x) {
+    /**
+     * @description This function encapsulates the behavior of a state machine. The function receives the input to be processed by the machine, and outputs the results of the machine computation. In the general case, the machine computes an array of values. The array can be empty, and when not, it may contain null values. The machine may also return null (in csae of an input that the machine is not configured to react to) instead of returning an array.
+     * @param {*} input
+     * @returns {FSM_Outputs|Error}
+     * @throws if an error is produced that is not an error recognized by Kingly. This generally means an unexpected exception has occurred.
+     */
+    withProtectedState:   function fsm(input) {
       try {
-        const {eventName, eventData} = destructureEvent(x);
-        const current_state = getCurrentControlState();
+        const {eventName, eventData} = destructureEvent(input);
+        const current_state = getCurrentControlState(hash_states);
 
         tracer({
           type: INPUT_MSG,
@@ -595,14 +410,14 @@ export function createStateMachineAPIs(fsmDef, settings) {
           }
         });
 
-        const outputs = send_event(x, true);
+        const outputs = send_event(input, false);
 
         debug && console.info("OUTPUTS:", outputs);
         tracer({
           type: OUTPUTS_MSG,
           trace: {
             outputs,
-            machineState: {cs: getCurrentControlState(), es: extendedState, hs: history}
+            machineState: {cs: getCurrentControlState(hash_states), es: extendedState, hs: history}
           }
         });
 
@@ -616,7 +431,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
             trace: {
               error: e,
               message: `An error ocurred while running an input through the machine!`,
-              machineState: {cs: getCurrentControlState(), es: extendedState, hs: history}
+              machineState: {cs: getCurrentControlState(hash_states), es: extendedState, hs: history}
             }
           });
 
@@ -628,7 +443,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
             trace: {
               error: e,
               message: `An unknown error ocurred while running an input through the machine!`,
-              machineState: {cs: getCurrentControlState(), es: extendedState, hs: history}
+              machineState: {cs: getCurrentControlState(hash_states), es: extendedState, hs: history}
             }
           });
           console.error(`yyield > unexpected error!`, e);
@@ -637,6 +452,12 @@ export function createStateMachineAPIs(fsmDef, settings) {
         }
       }
     },
+    /**
+     * @description This function encapsulates the behavior of a state machine but requires to be passed both the machine internal state and an input from which to compute the machine outputs. According to the parameter passed as internal state, the machine may: 1. (undefined) compute outputs from the last state of the machine, 1. (null) compute outputs, restarting from its initial state, 3. (truthy) compute outputs from the given state of the machine
+     * @param {*} input
+     * @param {FSM_Internal_State} fsmState
+     * @returns {{outputs: FSM_Outputs|Error, fsmState: FSM_Internal_State}}
+     */
     withPureInterface: function compute(input, fsmState){
       if (fsmState === void 0){
         // Don't update the state of the state machine
@@ -652,36 +473,246 @@ export function createStateMachineAPIs(fsmDef, settings) {
       }
       else {
         // Reset the state (available in closure) of the state machine
-      const {cs, hs, es} = fsmState;
+        const {cs, hs, es} = fsmState;
         extendedState = es;
         history = hs;
         hash_states[INIT_STATE].current_state_name = cs;
       }
+
       // run the machine
       const outputs = fsmAPIs.withProtectedState(input);
-      // NOTE: history does not need to be cloned here!
-      // The updateHistory function does not modify history but returns a new one
-      // There is thus no risk of accidentally modifying the history of another machine
+      // NOTE: history does not need to be cloned here! We do not update the
+      // history in place => No risk of accidentally modifying the history
+      // of another machine
       // TODO: We should however definitely clone `extendedState` How to modify the API?
       // Require a clone function in settings? with a default of JSON.stringify?
       // or we shift the responsibility on the API user to do the cloning?
       // Good: faster in the default case, simpler library too, no cloning when not needed
       // Bad: library user can forget, so footgun...
       // ADR: API that forces to signal a clone function, which can be DEFAULT_CLONE
-      return {outputs, fsmState: {cs: getCurrentControlState(), hs:history, es:extendedState}}
+      return {outputs, fsmState: {cs: getCurrentControlState(hash_states), hs:history, es:extendedState}}
     }
   };
 
   return fsmAPIs
+
+  // Auxiliary functions
+  //
+
+  /**
+   *
+   * @param {function(...*): True | Error} contract
+   * @param {Array<*>} arrayParams
+   * @returns {undefined}
+   * @throws KinglyError in case of one or more failing contracts
+   */
+  function assertContract(contract, arrayParams) {
+    const hasFailed = assert(contract, arrayParams);
+    if (checkContracts && hasFailed) {
+      throwKinglyError(hasFailed)
+    }
+
+    return void 0
+  }
+
+  /**
+   * @description process an input (aka event) according to the machine specifications.
+   * @param {LabelledEvent} event_struct input to be processed by the machine
+   * @param {Boolean} isInternalEvent should be true iff the event is sent by Kingly, not by the
+   * API user. API user should always leave this undefined.
+   * This works around an edge case discovered through testing.
+   * With the fix implemented here, API users that send an INIT_EVENT will have it ignored.
+   * INIT_EVENT is reserved and API users should not use it. This fix is for robustness purposes.
+   * @returns {FSM_Outputs}
+   */
+  function send_event(event_struct, isInternalEvent) {
+    assertContract(isEventStruct, [event_struct]);
+
+    const {eventName, eventData} = destructureEvent(event_struct);
+    const current_state = getCurrentControlState(hash_states);
+
+    console.group("send event " + eventName||"");
+    console.log(event_struct);
+
+    // Edge case to deal with: INIT_EVENT sent and the current state is the initial state
+    // This is a side-effect of our implementation that leverages JS prototypes.
+    // The INIT_STATE is a super-state of all states in the machine. Hence sending an INIT_EVENT
+    // would always execute the INIT transition by prototypal delegation.
+    // This led to a bug where an API user would maliciously send the reserved INIT_EVENT,
+    // thus resetting the machine in its initial state, with an unpredictable extended state!
+    // That, in turn, results from a **design mistake** that I will not correct here, which consisted
+    // in letting API users configure an initial control state, OR initial INIT_EVENT transitions.
+    // ADR: the impact is small, the fix is ok. API users have more flexibility at the
+    // cost of implementation complexity. But next time, pick simplicity over flexibility.
+    if (!isInternalEvent && eventName === INIT_EVENT && current_state !== INIT_STATE) {
+      tracer({
+        type: WARN_MSG,
+        trace: {
+          info: {eventName, eventData},
+          message: `The external event INIT_EVENT can only be sent when starting the machine!`,
+          machineState: {cs: current_state, es: extendedState, hs: history}
+        }
+      });
+      console.warn(`The external event INIT_EVENT can only be sent when starting the machine!`)
+      console.groupEnd();
+
+      return null
+    }
+
+    const outputs = process_event(
+      hash_states_struct.hash_states,
+      eventName,
+      eventData,
+      extendedState
+    );
+
+    console.groupEnd();
+
+    return outputs
+  }
+
+  function process_event(hashStates, event, eventData, extendedState) {
+    const currentState = hashStates[INIT_STATE].current_state_name;
+    const eventHandler = hashStates[currentState][event];
+
+    if (eventHandler) {
+      // CASE : There is a transition associated to that event
+      console.log("found event handler!");
+      console.info("WHEN EVENT ", event, eventData);
+      /* OUT : this event handler modifies the extendedState and possibly other data structures */
+      const {stop, outputs: rawOutputs} = eventHandler(extendedState, eventData, currentState);
+      debug && !stop && console.warn("No guards have been fulfilled! We recommend to configure guards explicitly to" +
+        " cover the full state space!")
+      const outputs = arrayizeOutput(rawOutputs);
+
+      // we read it anew as the execution of the event handler may have changed it
+      const new_current_state = hashStates[INIT_STATE].current_state_name;
+
+      // Two cases here:
+      // 1. Init handlers, when present on the current state, must be acted on immediately
+      // This allows for sequence of init events in various state levels
+      // For instance, L1: init -> L2:init -> L3:init -> L4: stateX
+      // In this case eventData will carry on the data passed on from the last event (else we loose
+      // the extendedState?)
+      // 2. transitions with no events associated, only conditions (i.e. transient states)
+      // NOTE : the guard is to defend against loops occuring when an AUTO transition fails to advance and stays
+      // in the same control state!! But by contract that should never happen : all AUTO transitions should advance!
+      // TODO : test that case, what is happening? I should add a branch and throw!!
+      if (is_auto_state[new_current_state] && new_current_state !== currentState) {
+        // CASE : transient state with no triggering event, just conditions
+        // automatic transitions = transitions without events
+        const auto_event = is_init_state[new_current_state]
+          ? INIT_EVENT
+          : AUTO_EVENT;
+
+        tracer({
+          type: INTERNAL_INPUT_MSG,
+          trace: {
+            info: {eventName: auto_event, eventData: eventData},
+            event: {[auto_event]: eventData},
+            machineState: {cs: getCurrentControlState(hashStates), es: extendedState, hs: history}
+          }
+        });
+
+        const nextOutputs = send_event({[auto_event]: eventData}, true);
+
+        tracer({
+          type: INTERNAL_OUTPUTS_MSG,
+          trace: {
+            outputs: nextOutputs,
+            machineState: {cs: getCurrentControlState(hashStates), es: extendedState, hs: history}
+          }
+        });
+
+        return [].concat(outputs).concat(nextOutputs);
+      } else return outputs;
+    } else {
+      // CASE : There is no transition associated to that event from that state
+      console.warn(`There is no transition associated to the event |${event}| in state |${currentState}|!`);
+      tracer({
+        type: WARN_MSG,
+        trace: {
+          info: {received: {[event]: eventData}},
+          message: `There is no transition associated to the event |${event}| in state |${currentState}|!`,
+          machineState: {cs: currentState, es: extendedState, hs: history}
+        }
+      });
+
+      return null;
+    }
+  }
+
+  function leave_state(from, extendedState, hash_states) {
+    // NOTE : extendedState is passed as a parameter for symetry reasons, no real use for it so far
+    const state_from = hash_states[from];
+    const state_from_name = state_from.name;
+
+    history = updateHistory(history, stateAncestors, state_from_name);
+
+    console.info("left state", wrap(from));
+  }
+
+  function enter_next_state(to, updatedExtendedState, hash_states) {
+    let state_to;
+    let state_to_name;
+    // CASE : history state (H)
+    if (isHistoryControlState(to)) {
+      const history_type = to.deep ? DEEP : to.shallow ? SHALLOW : void 0;
+      const history_target = to[history_type];
+      // Edge case : history state (H) && no history (i.e. first time state is entered), target state
+      // is the entered state
+      // TODO: edge case should be init state for compound state, and check it is recursively descended,
+      // and error if the history target is an atomic state
+      // if (!is_auto_state(history_target)) throw `can't be atomic state`
+      // then by setting the compound state, it should evolve toward to init control state naturally
+      debug && console && !is_init_state[history_target] && console.error(`Configured a history state which does not relate to a compound state! The behaviour of the machine is thus unspecified. Please review your machine configuration`);
+      state_to_name = history[history_type][history_target] || history_target;
+      state_to = hash_states[state_to_name];
+    }
+    else if (to) {
+      // CASE : normal state
+      state_to = hash_states[to];
+      state_to_name = state_to.name;
+    } else {
+      throwKinglyError ("enter_state : unknown case! Not a state name, and not a history state to enter!");
+    }
+    hash_states[INIT_STATE].current_state_name = state_to_name;
+
+    tracer({
+      type: DEBUG_MSG,
+      trace: {
+        message: isHistoryControlState(to)
+          ? `Entering history state for ${to[to.deep ? DEEP : to.shallow ? SHALLOW : void 0]}`
+          : `Entering state ${to}`,
+        machineState: {cs: getCurrentControlState(hash_states), es: extendedState, hs: history}
+      }
+    });
+    debug && console.info("AND TRANSITION TO STATE", state_to_name);
+    return state_to_name;
+  }
+
+  function start() {
+    tracer({
+      type: INIT_INPUT_MSG,
+      trace: {
+        info: {eventName: INIT_EVENT, eventData: initialExtendedState},
+        event: {[INIT_EVENT]: initialExtendedState},
+        machineState: {cs: getCurrentControlState(hash_states), es: extendedState, hs: history}
+      }
+    });
+
+    return send_event({[INIT_EVENT]: initialExtendedState}, true);
+  }
+
 }
 
 /**
- *
- * @param {WebComponentName} name name for the web component. Must include at least one hyphen per custom
+ * TODO: adjust the types to the signature
+ * @param {String} name name for the web component. Must include at least one hyphen per custom
  * components' specification
  * @param {Subject} eventHandler A factory function which returns a subject, i.e. an object which
  * implements the `Observer` and `Observable` interface
- * @param {FSM} fsm An executable machine, i.e. a function which accepts machine inputs
+ * @param {Stateful_FSM} fsm An executable machine, i.e. a function which accepts machine inputs
  * @param {Object.<CommandName, CommandHandler>} commandHandlers
  * @param {*} effectHandlers Typically anything necessary to perform effects. Usually this is a hashmap mapping an effect moniker to a function performing the corresponding effect.
  * @param {{initialEvent, terminalEvent, NO_ACTION}} options

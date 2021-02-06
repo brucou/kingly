@@ -39,7 +39,7 @@ const debug_settings = Object.assign({}, default_settings, {
       checkContracts: fsmContracts,
       console
     },
-  devTool: {tracer}
+  devTool: {tracer},
   }
 );
 
@@ -384,9 +384,9 @@ QUnit.test("2 INIT event", function exec_test(assert) {
     updateState: applyJSONpatch,
   };
   const fsm = createStateMachine(fsmDef, debug_settings);
+  // @ts-ignore
   const result2 = fsm({[INIT_EVENT]: EVENT1_DATA});
   assert.deepEqual([result2], [
-
     null
   ], `event triggers correct transition`);
 });

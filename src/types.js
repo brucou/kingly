@@ -1,3 +1,27 @@
+//@ts-check
+/**
+ * @typedef {Boolean} True the `true` boolean value
+ */
+/**
+ * @typedef  {Array<MachineOutput> | null} FSM_Outputs
+ */
+/**
+ * @typedef  {Object} FSM_Internal_State
+ * @property {String} cs control state
+ * @property {HistoryState} hs history state
+ * @property {ExtendedState} es extended state
+ */
+/**
+ * @callback Stateful_FSM
+ * @param {*} input
+ * @returns {FSM_Outputs|Error}
+ */
+/**
+ * @callback Pure_FSM
+ * @param {*} input
+ * @param {FSM_Internal_State} fsm_state
+ * @returns {{outputs: FSM_Outputs|Error, fsmState: FSM_Internal_State}}
+ */
 /**
  * @typedef {Object} FSM_Def
  * @property {FSM_States} states Object whose every key is a control state admitted by the
@@ -6,7 +30,7 @@
  * @property {Array<EventLabel>} events A list of event monikers the machine is configured to react to
  * @property {Array<Transition>} transitions An array of transitions the machine is allowed to take
  * @property {*} initialExtendedState The initial value for the machine's extended state
- * @property {{updateState :: Function(ExtendedState, ExtendedStateUpdate) : ExtendedState}} updateState function
+ * @property {function(ExtendedState, ExtendedStateUpdate) : ExtendedState} updateState function
  * which update the extended state of the state machine
  */
 /**
@@ -41,7 +65,20 @@
  * API caller.
  */
 /** @typedef {function (ExtendedState, EventData) : Boolean} FSM_Predicate */
-/** @typedef {{debug, devTool: {tracer}, displayName: String}} FSM_Settings
+/**
+ * @typedef {Object} Debug_Settings
+ * @property {*} checkContracts opaque type. Just use the fsmContracts that is exported by Kingly.
+ * @property {Console} console object with the same properties as console in a browser environment.
+ * Can be used to fake or stub the console for logging purposes or outside browser environments.
+ *
+ * */
+/** @typedef {Object} DevTool_Settings
+ * @property {*} tracer opaque type. Just use the tracer provided by the Courtesan extension.
+ * */
+/** @typedef {Object} FSM_Settings
+ * @property {Debug_Settings} debug
+ * @property {DevTool_Settings} devTool
+ * @property {String} [displayName]
  * Miscellaneous settings including how to update the machine's state and debug
  * configuration
  * */
@@ -85,10 +122,7 @@
  * @typedef {function(historyType: HistoryType, controlState: ControlState): HistoryState} HistoryStateFactory
  */
 /**
- * @typedef {{type:{}, [HistoryType]: ControlState}} HistoryState
- */
-/**
- * @typedef {Object.<HistoryType, HistoryDict>} History history object containing deeep and shallow history states
+ * @typedef {Object.<HistoryType, HistoryDict>} HistoryState history object containing deeep and shallow history states
  * for all relevant control states
  */
 /**
@@ -147,4 +181,8 @@
  */
 /**
  * @typedef {function(): Subject} SubjectFactory
+ */
+
+/**
+ * @typedef {*} Operation
  */

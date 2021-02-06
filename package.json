@@ -17,7 +17,7 @@
     "automaton",
     "automata"
   ],
-  "module": "dist/kingly.es.js",
+  "module": "src/index.js",
   "main": "dist/kingly.umd.js",
   "unpkg": "dist/kingly.umd.js",
   "files": [
@@ -51,8 +51,6 @@
     "benchmark": "^2.1.2",
     "browser-sync": "^2.18.8",
     "courtesan": "^0.4.0",
-    "enzyme": "^3.7.0",
-    "enzyme-adapter-react-16": "^1.7.0",
     "fetch-jsonp": "^1.1.3",
     "flipping": "1.1.0",
     "hyperscript-helpers": "3.0.3",
@@ -61,7 +59,7 @@
     "kuker-emitters": "^6.7.4",
     "nodemon": "^1.9.2",
     "parcel": "^1.12.4",
-    "parcel-bundler": "^1.10.3",
+    "parcel-bundler": "^1.12.4",
     "qunitjs": "^1.20.0",
     "ramda": "^0.25.0",
     "react": "16.5.0",

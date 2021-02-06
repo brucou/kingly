@@ -1,7 +1,8 @@
 // Ramda fns
 import {
   ACTION_FACTORY_DESC, DEEP, ENTRY_ACTION_FACTORY_DESC, FUNCTION_THREW_ERROR, HISTORY_PREFIX, HISTORY_STATE_NAME,
-  INIT_EVENT, INIT_STATE, INVALID_ACTION_FACTORY_EXECUTED, INVALID_PREDICATE_EXECUTED, NO_OUTPUT,
+  INIT_EVENT, INIT_STATE, INVALID_ACTION_FACTORY_EXECUTED, INVALID_PREDICATE_EXECUTED, MACHINE_CREATION_ERROR_MSG,
+  NO_OUTPUT,
   PREDICATE_DESC,
   SHALLOW, WRONG_EVENT_FORMAT_ERROR
 } from "./properties"
@@ -9,7 +10,7 @@ import {objectTreeLenses, PRE_ORDER, traverseObj} from "fp-rosetree"
 
 export const noop = () => {
 };
-export const emptyConsole = {log: noop, warn: noop, info: noop, debug: noop, error: noop, trace: noop};
+export const emptyConsole = {log: noop, warn: noop, info: noop, debug: noop, error: noop, trace: noop, group:noop, groupEnd: noop};
 export const emptyTracer = noop;
 
 export function isBoolean(x) {
@@ -539,11 +540,11 @@ export function isAtomicState(analyzedStates, controlState) {
 /**
  * Updates the history state (both deep and shallow) after `state_from_name` has been exited. Impacted states are the
  * `stateAncestors` which are the ancestors for the exited state.
- * @param {History} _history Contains deep history and shallow history for all
+ * @param {HistoryState} _history Contains deep history and shallow history for all
  * control states, except the INIT_STATE (not that the concept has no value for atomic state). The function
  * `updateHistory` allows to update the history as transitions occur in the state machine.
  * @param {Object.<DEEP|SHALLOW, Object.<ControlState, Array<ControlState>>>} stateAncestors
- * @returns {History}
+ * @returns {HistoryState}
  * @modifies history
  */
 export function updateHistory(_history, stateAncestors, state_from_name) {
@@ -640,14 +641,14 @@ export function getFunctionName(actionFactory) {
 
 /**
  *
- * @param {function: true | Error} contract Contract returns either true (fulfilled contract) or an Error with an
- * optional info properties to give more details about the cause of the error
- * @param {Array} arrayParams Parameters to be passed to the conract
- * @returns {undefined|{when, location, info, message, ...}} if the contract is fulfilled
- * @throws if the contract fails
+ * @param {function(...*): True | Error} contract Contract that either fulfills or returns an error
+ * @param {Array<*>} arrayParams Parameters to be passed to the contract
+ * @returns {undefined|{when, location, info, message}|Object} either true (fulfilled contract)
+ * or an object with optional properties for diagnostic and tracing purposes
+ * about the cause of the error if the contract is not fulfilled
  */
 export function assert(contract, arrayParams) {
-  const contractName = contract.name ||contract.name.displayName || "";
+  const contractName = contract.name || "";
   const isFulfilledOrError = contract.apply(null, arrayParams);
   if (isFulfilledOrError === true) return void 0
   else {
@@ -776,6 +777,35 @@ export function destructureEvent(obj) {
 export function formatUndefinedInJSON(obj){
   return JSON.stringify(obj, (key,value)=> {if (value === undefined) return "undefined"; else return value})
 }
+
+export function getCurrentControlState(hash_states) {
+  return hash_states[INIT_STATE].current_state_name
+}
+
+export function wrapUpdateStateFn(userProvidedUpdateStateFn, {throwKinglyError, tracer}){
+  return (extendedState, updates) => {
+    const fnName = userProvidedUpdateStateFn.name || "";
+
+    try {
+      return userProvidedUpdateStateFn(extendedState, updates)
+    }
+    catch (e) {
+      throwKinglyError({
+        when: `Executing updateState function ${fnName}`,
+        location: `createStateMachine > wrappedUpdateState`,
+        info: {extendedState, updates},
+        message: e.message,
+        stack: e.stack,
+      })
+    }
+  };
+}
+
+export function throwKinglyErrorFactory (console,tracer)  {
+  return obj => {
+  throw new KinglyError(obj, console, tracer)
+  }
+};
 
 export class KinglyError extends Error {
   constructor(m, console, tracer) {

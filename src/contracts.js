@@ -17,8 +17,9 @@ import {
     isHistoryControlState,
     noop
 } from "./helpers"
+// @ts-ignore
 import {objectTreeLenses, PRE_ORDER, traverseObj} from "fp-rosetree"
-import {CONTRACTS_EVAL, INIT_EVENT, INIT_STATE} from "./properties"
+import { CONTRACTS_EVAL, INIT_EVENT, INIT_STATE, MACHINE_CREATION_ERROR_MSG } from "./properties"
 
 // Contracts
 
@@ -803,7 +804,35 @@ function makeContractHandler(contractsDef, settings) {
     }
 }
 
+// @ts-ignore error here is due to variable number of arguments, not worth spending time there
 export const fsmContractChecker = (fsmDef, settings, fsmContracts) => makeContractHandler(fsmContracts, settings)(fsmDef, settings);
+
+export function runContracts({fsmDef, settings}, checkContracts, {throwKinglyError, tracer}){
+  if (checkContracts) {
+    const {failingContracts} = fsmContractChecker(fsmDef, settings, checkContracts);
+    try {
+      if (failingContracts.length > 0) throwKinglyError({
+        when: `Attempting to create a Kingly machine`,
+        location: `createStateMachine`,
+        info: {fsmDef, settings, failingContracts},
+        message: `I found that one or more Kingly contracts are violated!`
+      })
+    }
+    catch (e) {
+      // Do not break the program, errors should be passed to console and dev tool
+      tracer({
+        type: MACHINE_CREATION_ERROR_MSG,
+        trace: {
+          info: e.errors,
+          message: e.message,
+          machineState: {cs: void 0, es: void 0, hs: void 0}
+        }
+      });
+      return e
+    }
+  }
+}
+
 
 // Terminology
 // . A transition is uniquely defined by `(origin, event, predicate, target, action, transition index, guard index)`
