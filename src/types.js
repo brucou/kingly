@@ -75,9 +75,9 @@
 /** @typedef {Object} DevTool_Settings
  * @property {*} tracer opaque type. Just use the tracer provided by the Courtesan extension.
  * */
-/** @typedef {Object} FSM_Settings
- * @property {Debug_Settings} debug
- * @property {DevTool_Settings} devTool
+/** @typedef {Object|{}} FSM_Settings
+ * @property {Debug_Settings} [debug]
+ * @property {DevTool_Settings} [devTool]
  * @property {String} [displayName]
  * Miscellaneous settings including how to update the machine's state and debug
  * configuration

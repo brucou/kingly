@@ -123,7 +123,7 @@ export function normalizeTransitions(fsmDef) {
 /**
  *
  * @param {FSM_Def} fsmDef
- * @param {FSM_Settings} settings
+ * @param {FSM_Settings} [settings]
  * @returns {Error | Stateful_FSM}
  */
 export function createStateMachine(fsmDef, settings) {

@@ -44,7 +44,7 @@ const debug_settings = Object.assign({}, default_settings, {
 );
 
 const FALSE_GUARD = function always_false(action, state) {
-  return [{predicate: F, to: state, action}]
+  return {predicate: F, to: state, action}
 };
 const TRUE_GUARD = function always_true(to, action) {
   return [{predicate: T, to, action}]
@@ -133,12 +133,13 @@ QUnit.test("event, no action, false guard", function exec_test(assert) {
     events: ['ev'],
     transitions: [
       { from: INIT_STATE, to: 'A', event: INIT_EVENT, action: ACTION_IDENTITY },
-      { from: 'A', to: 'B', event: 'ev', guards: FALSE_GUARD(ACTION_IDENTITY, 'A') }
+      { from: 'A', to: 'B', event: 'ev', guards: [FALSE_GUARD(ACTION_IDENTITY, 'A')] }
     ],
     initialExtendedState: initialExtendedState,
     updateState: applyJSONpatch,
   };
   const fsm = createStateMachine(fsmDef, default_settings);
+  // @ts-ignore
   const result = fsm({ ev: initialExtendedState });
   assert.deepEqual(result, [null], `event starts the state machine`);
 });
@@ -155,6 +156,7 @@ QUnit.test("event, no action, true guard", function exec_test(assert) {
     updateState: applyJSONpatch,
   };
   const fsm = createStateMachine(fsmDef);
+  // @ts-ignore
   const result = fsm({ ev: initialExtendedState });
   assert.deepEqual(result, null, `INIT event starts the state machine`);
 });
@@ -169,12 +171,13 @@ QUnit.test("event, action, false guard", function exec_test(assert) {
     events: ['ev'],
     transitions: [
       { from: INIT_STATE, to: 'A', event: INIT_EVENT, action: ACTION_IDENTITY },
-      { from: 'A', to: 'B', event: INIT_EVENT, conditions: FALSE_GUARD(fail_if_called) }
-    ],
+        { from: 'A', to: 'B', event: INIT_EVENT, guards: [FALSE_GUARD(fail_if_called)] }
+      ],
     initialExtendedState: initialExtendedState,
     updateState: applyJSONpatch,
-  };
-  const fsm = createStateMachine(fsmDef);
+};
+const fsm = createStateMachine(fsmDef);
+  // @ts-ignore
   const result = fsm({ ev: initialExtendedState });
   assert.deepEqual(result, null, `event starts the state machine`);
 });
@@ -197,6 +200,7 @@ QUnit.test("event, action, true guard", function exec_test(assert) {
     updateState: applyJSONpatch,
   };
   const fsm = createStateMachine(fsmDef, debug_settings);
+  // @ts-ignore
   const result = fsm({ ev: initialExtendedState });
   assert.deepEqual(result, arrayizeOutput(dummy_action_result.outputs),
     `event starts the state machine, transition is taken, action is executed`);
@@ -229,6 +233,7 @@ QUnit.test("event, 2 actions, [T,T] conditions, 1st action executed", function e
     updateState: applyJSONpatch,
   };
   const fsm = createStateMachine(fsmDef, default_settings);
+  // @ts-ignore
   const result = fsm({ ev: initialExtendedState });
   assert.deepEqual(result, arrayizeOutput(dummy_action_result.outputs),
     `event starts the state machine, transition is taken, action is executed`);
@@ -261,6 +266,7 @@ QUnit.test("event, 2 actions, [F,T] conditions, 2nd action executed", function e
     updateState: applyJSONpatch,
   };
   const fsm = createStateMachine(fsmDef, default_settings);
+  // @ts-ignore
   const result = fsm({ ev: initialExtendedState });
   assert.deepEqual(result, arrayizeOutput(dummy_action_result.outputs),
     `event starts the state machine, transition is taken, action is executed`);
@@ -293,6 +299,7 @@ QUnit.test("event, 2 actions, [T,F] conditions, 1st action executed", function e
     updateState: applyJSONpatch,
   };
   const fsm = createStateMachine(fsmDef, default_settings);
+  // @ts-ignore
   const result = fsm({ ev: initialExtendedState });
   assert.deepEqual(result, arrayizeOutput(dummy_action_result.outputs),
     `event starts the state machine, transition is taken, action is executed`);
@@ -319,6 +326,7 @@ QUnit.test("event, 2 actions, [F,F] conditions, no action executed", function ex
     updateState: applyJSONpatch,
   };
   const fsm = createStateMachine(fsmDef, debug_settings);
+  // @ts-ignore
   const result = fsm({ ev: initialExtendedState });
   assert.deepEqual(result, [null],
     `event starts the state machine, all guards failing, no transition is taken, no action is executed`);
@@ -336,6 +344,7 @@ QUnit.test("event, 2 actions with no extendedState update, NOK -> A -> B, no gua
     updateState: applyJSONpatch,
   };
   const fsm = createStateMachine(fsmDef, default_settings);
+  // @ts-ignore
   const result2 = fsm({ [EVENT1]: EVENT1_DATA });
   assert.deepEqual([result2], [arrayizeOutput(another_output)], `event triggers correct transition`);
 });
@@ -352,6 +361,7 @@ QUnit.test("event, 2 actions with extendedState update, NOK -> A -> B, no guards
     updateState: applyJSONpatch,
   };
   const fsm = createStateMachine(fsmDef, default_settings);
+  // @ts-ignore
   const result2 = fsm({ [EVENT1]: EVENT1_DATA });
   const cloned_model_initial = clone(initialExtendedState);
   assert.deepEqual([result2], [
