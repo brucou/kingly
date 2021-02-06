@@ -9,3 +9,5 @@ A function factory, on the other hand, is arguably an interface closer to the de
 There is thus no longer a need to clone the machine produced by a factory. Cloning the state is what we actually want. The machine itself, i.e. its definition should be immutable: we are not changing the machine, only its state.
  
 This is a subjective point but I believe that the functional interface works best for the current, and leaves the flexibility to switch to another design later on, should the need occur.
+
+Additionally, the pure functional interface is useful to folks who wants to store the machine state out-of-process, and also for testing, to avoid recreating and rerunning a test sequence to put a machine back in a given state.
