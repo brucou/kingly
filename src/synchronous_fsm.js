@@ -31,7 +31,7 @@ import {
   wrap,
   throwKinglyErrorFactory, wrapUpdateStateFn, getCurrentControlState
 } from "./helpers";
-import {runContracts} from "./contracts"
+import { runContracts } from "./contracts"
 
 function alwaysTrue() {
   return true
@@ -59,7 +59,7 @@ function buildNestedStateStructure(states) {
   let is_group_state = {};
 
   // Add the starting state
-  states = {nok: states};
+  states = { nok: states };
 
   ////////
   // Helper functions
@@ -108,12 +108,12 @@ function buildNestedStateStructure(states) {
 }
 
 export function normalizeTransitions(fsmDef) {
-  const {initialControlState, transitions} = fsmDef;
+  const { initialControlState, transitions } = fsmDef;
   const initTransition = findInitTransition(transitions);
 
   if (initialControlState) {
     return transitions
-      .concat([{from: INIT_STATE, event: INIT_EVENT, to: initialControlState, action: ACTION_IDENTITY}])
+      .concat([{ from: INIT_STATE, event: INIT_EVENT, to: initialControlState, action: ACTION_IDENTITY }])
   }
   else if (initTransition) {
     return transitions
@@ -129,7 +129,7 @@ export function normalizeTransitions(fsmDef) {
 export function createStateMachine(fsmDef, settings) {
   const res = createStateMachineAPIs(fsmDef, settings);
   if (res instanceof Error) return res
-    else return res.withProtectedState
+  else return res.withProtectedState
 }
 
 /**
@@ -141,7 +141,7 @@ export function createStateMachine(fsmDef, settings) {
 export function createPureStateMachine(fsmDef, settings) {
   const res = createStateMachineAPIs(fsmDef, settings);
   if (res instanceof Error) return res
-    else return res.withPureInterface
+  else return res.withPureInterface
 }
 
 /**
@@ -159,7 +159,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
     initialExtendedState,
     updateState: userProvidedUpdateStateFn,
   } = fsmDef;
-  const {debug, devTool, displayName} = settings || {};
+  const { debug, devTool, displayName } = settings || {};
   const checkContracts = debug && debug.checkContracts || void 0;
   let console = debug && debug.console || emptyConsole;
   let tracer = devTool && devTool.tracer || emptyTracer;
@@ -167,13 +167,13 @@ export function createStateMachineAPIs(fsmDef, settings) {
 
   // Check contracts if the API user wants to,
   // but don't throw errors, return them and possibly log them
-  if (checkContracts){
-    const e = runContracts({fsmDef, settings}, checkContracts, {throwKinglyError, tracer});
+  if (checkContracts) {
+    const e = runContracts({ fsmDef, settings }, checkContracts, { throwKinglyError, tracer });
     if (e instanceof Error) return e
   }
 
   // Wrap user-provided update state function to capture errors
-  const wrappedUpdateState = wrapUpdateStateFn(userProvidedUpdateStateFn, {throwKinglyError, tracer});
+  const wrappedUpdateState = wrapUpdateStateFn(userProvidedUpdateStateFn, { throwKinglyError, tracer });
   // We also massage the shape of the user-provided transitions,
   // unifying the two ways of providing an initial state for the machine
   const transitions = normalizeTransitions(fsmDef);
@@ -203,10 +203,10 @@ export function createStateMachineAPIs(fsmDef, settings) {
 
   // Fill in the auxiliary data structures
   transitions.forEach(function (transition) {
-    let {from, to, action, event, guards: arr_predicate} = transition;
+    let { from, to, action, event, guards: arr_predicate } = transition;
     // CASE: ZERO OR ONE condition set
     if (!arr_predicate)
-      arr_predicate = [{predicate: void 0, to: to, action: action}];
+      arr_predicate = [{ predicate: void 0, to: to, action: action }];
 
     // CASE: transition has a init event
     // NOTE: there should ever only be one, but we don't enforce it here
@@ -249,7 +249,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
                 throwKinglyError({
                   when: `Executing predicate function ${predicateName}`,
                   location: `createStateMachine > event handler > condition_checking_fn > shouldTransitionBeTaken`,
-                  info: {extendedState, event, event_data, settings, guard, from, to, index},
+                  info: { extendedState, event, event_data, settings, guard, from, to, index },
                   message: [`Error occurred while processing event ${event} with target state ${to}`, e.message].join("\n"),
                   stack: e.stack,
                 })
@@ -260,7 +260,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
               throwKinglyError({
                 when: `Executing predicate function ${predicateName}`,
                 location: `createStateMachine > event handler > condition_checking_fn > throwIfInvalidGuardResult`,
-                info: {event, guard, from, to, index, shouldTransitionBeTaken},
+                info: { event, guard, from, to, index, shouldTransitionBeTaken },
                 message: `Guard index ${index} with name ${predicateName} did not return a boolean!`,
               })
             }
@@ -273,8 +273,8 @@ export function createStateMachineAPIs(fsmDef, settings) {
                   type: DEBUG_MSG,
                   trace: {
                     message: `The guard ${predicateName} is fulfilled`,
-                    info: {eventData: event_data, from, action: actionName, to},
-                    machineState: {cs: current_state, es: extendedState_, hs: history}
+                    info: { eventData: event_data, from, action: actionName, to },
+                    machineState: { cs: current_state, es: extendedState_, hs: history }
                   }
                 });
                 console.info(`CASE: guard ${predicate.name} for transition is fulfilled`);
@@ -284,8 +284,8 @@ export function createStateMachineAPIs(fsmDef, settings) {
                   type: DEBUG_MSG,
                   trace: {
                     message: `Evaluating transition with no guards`,
-                    info: {eventData: event_data, from, action: actionName, to},
-                    machineState: {cs: current_state, es: extendedState, hs: history}
+                    info: { eventData: event_data, from, action: actionName, to },
+                    machineState: { cs: current_state, es: extendedState, hs: history }
                   }
                 });
                 console.info(`CASE: unguarded transition`);
@@ -300,7 +300,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
                   throwKinglyError({
                     when: `Executing action factory ${actionName}`,
                     location: `createStateMachine > event handler > condition_checking_fn`,
-                    info: {extendedState, event, event_data, settings, guard, from, to, index, action},
+                    info: { extendedState, event, event_data, settings, guard, from, to, index, action },
                     message: e.message,
                     stack: e.stack,
                   })
@@ -311,12 +311,12 @@ export function createStateMachineAPIs(fsmDef, settings) {
                 throwKinglyError({
                   when: `Executing action factory ${actionName}`,
                   location: `createStateMachine > event handler > condition_checking_fn`,
-                  info: {extendedState, event, event_data, settings, guard, from, to, index, action, actionResult},
+                  info: { extendedState, event, event_data, settings, guard, from, to, index, action, actionResult },
                   message: `Action factory returned a value that does not have the expected shape!`,
                 })
               }
 
-              const {updates, outputs} = actionResult;
+              const { updates, outputs } = actionResult;
 
               // Leave the current state
               leave_state(from, extendedState_, hash_states);
@@ -330,7 +330,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
               console.info("with extended state: ", extendedState);
 
               // allows for chaining and stop chaining guard
-              return {stop: true, outputs};
+              return { stop: true, outputs };
             }
             else {
               // CASE : guard for transition is not fulfilled
@@ -338,11 +338,11 @@ export function createStateMachineAPIs(fsmDef, settings) {
                 type: DEBUG_MSG,
                 trace: {
                   message: guard.predicate ? `The guard ${predicateName} is not fulfilled!` : `Evaluated and skipped transition`,
-                  info: {eventData: event_data, settings, guard, from, to, index, action: actionName},
-                  machineState: {cs: current_state, es: extendedState, hs: history}
+                  info: { eventData: event_data, settings, guard, from, to, index, action: actionName },
+                  machineState: { cs: current_state, es: extendedState, hs: history }
                 }
               });
-              return {stop: false, outputs: null};
+              return { stop: false, outputs: null };
             }
           };
 
@@ -358,7 +358,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
         };
       },
       function dummy() {
-        return {stop: false, outputs: null};
+        return { stop: false, outputs: null };
       }
     );
   });
@@ -368,7 +368,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
   // The control state is kept in hash_states, rather than a dedicated variable
   // NOTE: the user-provided update function by contract cannot update in place
   // There is thus no need to clone the initial extended state.
-  const {stateList, stateAncestors} = computeHistoryMaps(controlStates);
+  const { stateList, stateAncestors } = computeHistoryMaps(controlStates);
   let history = initHistoryDataStructure(stateList);
   let extendedState = initialExtendedState;
 
@@ -383,8 +383,8 @@ export function createStateMachineAPIs(fsmDef, settings) {
       type: MACHINE_CREATION_ERROR_MSG,
       trace: {
         message: e.message,
-        info: {fsmDef, settings, error: e},
-        machineState: {cs: INIT_STATE, es: extendedState, hs: history}
+        info: { fsmDef, settings, error: e },
+        machineState: { cs: INIT_STATE, es: extendedState, hs: history }
       }
     });
     return e
@@ -392,21 +392,26 @@ export function createStateMachineAPIs(fsmDef, settings) {
 
   const fsmAPIs = {
     /**
-     * @description This function encapsulates the behavior of a state machine. The function receives the input to be processed by the machine, and outputs the results of the machine computation. In the general case, the machine computes an array of values. The array can be empty, and when not, it may contain null values. The machine may also return null (in csae of an input that the machine is not configured to react to) instead of returning an array.
+     * @description This function encapsulates the behavior of a state machine. The function receives the input to be
+     *   processed by the machine, and outputs the results of the machine computation. In the general case, the machine
+     *   computes an array of values. The array can be empty, and when not, it may contain null values. The machine may
+     *   also return null (in csae of an input that the machine is not configured to react to) instead of returning an
+     *   array.
      * @param {*} input
      * @returns {FSM_Outputs|Error}
-     * @throws if an error is produced that is not an error recognized by Kingly. This generally means an unexpected exception has occurred.
+     * @throws if an error is produced that is not an error recognized by Kingly. This generally means an unexpected
+     *   exception has occurred.
      */
-    withProtectedState:   function fsm(input) {
+    withProtectedState: function fsm(input) {
       try {
-        const {eventName, eventData} = destructureEvent(input);
+        const { eventName, eventData } = destructureEvent(input);
         const current_state = getCurrentControlState(hash_states);
 
         tracer({
           type: INPUT_MSG,
           trace: {
-            info: {eventName, eventData},
-            machineState: {cs: current_state, es: extendedState, hs: history}
+            info: { eventName, eventData },
+            machineState: { cs: current_state, es: extendedState, hs: history }
           }
         });
 
@@ -417,7 +422,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
           type: OUTPUTS_MSG,
           trace: {
             outputs,
-            machineState: {cs: getCurrentControlState(hash_states), es: extendedState, hs: history}
+            machineState: { cs: getCurrentControlState(hash_states), es: extendedState, hs: history }
           }
         });
 
@@ -431,7 +436,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
             trace: {
               error: e,
               message: `An error ocurred while running an input through the machine!`,
-              machineState: {cs: getCurrentControlState(hash_states), es: extendedState, hs: history}
+              machineState: { cs: getCurrentControlState(hash_states), es: extendedState, hs: history }
             }
           });
 
@@ -443,7 +448,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
             trace: {
               error: e,
               message: `An unknown error ocurred while running an input through the machine!`,
-              machineState: {cs: getCurrentControlState(hash_states), es: extendedState, hs: history}
+              machineState: { cs: getCurrentControlState(hash_states), es: extendedState, hs: history }
             }
           });
           console.error(`yyield > unexpected error!`, e);
@@ -453,13 +458,17 @@ export function createStateMachineAPIs(fsmDef, settings) {
       }
     },
     /**
-     * @description This function encapsulates the behavior of a state machine but requires to be passed both the machine internal state and an input from which to compute the machine outputs. According to the parameter passed as internal state, the machine may: 1. (undefined) compute outputs from the last state of the machine, 1. (null) compute outputs, restarting from its initial state, 3. (truthy) compute outputs from the given state of the machine
+     * @description This function encapsulates the behavior of a state machine but requires to be passed both the
+     *   machine internal state and an input from which to compute the machine outputs. According to the parameter
+     *   passed as internal state, the machine may: 1. (undefined) compute outputs from the last state of the machine,
+     *   1. (null) compute outputs, restarting from its initial state, 3. (truthy) compute outputs from the given state
+     *   of the machine
      * @param {*} input
      * @param {FSM_Internal_State} fsmState
      * @returns {{outputs: FSM_Outputs|Error, fsmState: FSM_Internal_State}}
      */
-    withPureInterface: function compute(input, fsmState){
-      if (fsmState === void 0){
+    withPureInterface: function compute(input, fsmState) {
+      if (fsmState === void 0) {
         // Don't update the state of the state machine
         // This means the machine will continue processing inputs
         // using its current state
@@ -473,7 +482,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
       }
       else {
         // Reset the state (available in closure) of the state machine
-        const {cs, hs, es} = fsmState;
+        const { cs, hs, es } = fsmState;
         extendedState = es;
         history = hs;
         hash_states[INIT_STATE].current_state_name = cs;
@@ -490,7 +499,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
       // Good: faster in the default case, simpler library too, no cloning when not needed
       // Bad: library user can forget, so footgun...
       // ADR: API that forces to signal a clone function, which can be DEFAULT_CLONE
-      return {outputs, fsmState: {cs: getCurrentControlState(hash_states), hs:history, es:extendedState}}
+      return { outputs, fsmState: { cs: getCurrentControlState(hash_states), hs: history, es: extendedState } }
     }
   };
 
@@ -528,10 +537,10 @@ export function createStateMachineAPIs(fsmDef, settings) {
   function send_event(event_struct, isInternalEvent) {
     assertContract(isEventStruct, [event_struct]);
 
-    const {eventName, eventData} = destructureEvent(event_struct);
+    const { eventName, eventData } = destructureEvent(event_struct);
     const current_state = getCurrentControlState(hash_states);
 
-    console.group("send event " + eventName||"");
+    console.group("send event " + eventName || "");
     console.log(event_struct);
 
     // Edge case to deal with: INIT_EVENT sent and the current state is the initial state
@@ -548,9 +557,9 @@ export function createStateMachineAPIs(fsmDef, settings) {
       tracer({
         type: WARN_MSG,
         trace: {
-          info: {eventName, eventData},
+          info: { eventName, eventData },
           message: `The external event INIT_EVENT can only be sent when starting the machine!`,
-          machineState: {cs: current_state, es: extendedState, hs: history}
+          machineState: { cs: current_state, es: extendedState, hs: history }
         }
       });
       console.warn(`The external event INIT_EVENT can only be sent when starting the machine!`)
@@ -575,8 +584,8 @@ export function createStateMachineAPIs(fsmDef, settings) {
     const currentState = hashStates[INIT_STATE].current_state_name;
     const eventHandler = hashStates[currentState][event];
 
+    // CASE : There is a transition associated to that event
     if (eventHandler) {
-      // CASE : There is a transition associated to that event
       console.log("found event handler!");
       console.info("WHEN EVENT ", event, eventData);
 
@@ -584,78 +593,81 @@ export function createStateMachineAPIs(fsmDef, settings) {
       // - no guards are satisfied => outputs = null
       // - guards satisfied => outputs an array, possibly containing a null value
       /** OUT: this event handler modifies the in-closure machine state (extendedState, control state, history state) */
-      const {stop, outputs: rawOutputs} = eventHandler(extendedState, eventData, currentState);
+      const { stop, outputs: rawOutputs } = eventHandler(extendedState, eventData, currentState);
       debug && !stop && console.warn("No guards have been fulfilled! We recommend to configure guards explicitly to" +
         " cover the full state space!")
       const outputs = arrayizeOutput(rawOutputs);
 
-      // we read it anew as the execution of the event handler may have changed it
-      const new_current_state = hashStates[INIT_STATE].current_state_name;
+      // We read it anew as the execution of the event handler may have changed it
+      const newCurrentState = hashStates[INIT_STATE].current_state_name;
 
       // Two cases here:
       // 1. Init handlers, when present on the current state, must be acted on immediately
       // This allows for sequence of init events in various state levels
       // For instance, L1:init -> L2:init -> L3:init -> L4: stateX
-      // In this case eventData will carry on the data passed on from the last (non init) event
-      // 2. eventless transitions (i.e. transient states)
-      // NOTE : the guard is to defend against loops occuring when an AUTO transition fails to advance and stays
+      // In this case, eventData will be passed on every INIT_EVENT
+      // 2. eventless transitions
+      // NOTE : the inside guard is to defend against loops occuring when an AUTO transition fails to advance and stays
       // in the same control state!! But by contract that should never happen: all AUTO transitions should advance!
-      if (is_auto_state[new_current_state] && new_current_state !== currentState) {
-        // CASE : transient state with no triggering event, just conditions
-        // automatic transitions = transitions without events
-        const auto_event = is_init_state[new_current_state]
-          ? INIT_EVENT
-          : AUTO_EVENT;
+      if (is_auto_state[newCurrentState]) {
+        if (newCurrentState !== currentState) {
+          const auto_event = is_init_state[newCurrentState]
+            ? INIT_EVENT
+            : AUTO_EVENT;
 
-        tracer({
-          type: INTERNAL_INPUT_MSG,
-          trace: {
-            info: {eventName: auto_event, eventData: eventData},
-            event: {[auto_event]: eventData},
-            machineState: {cs: getCurrentControlState(hashStates), es: extendedState, hs: history}
-          }
-        });
+          tracer({
+            type: INTERNAL_INPUT_MSG,
+            trace: {
+              info: { eventName: auto_event, eventData: eventData },
+              event: { [auto_event]: eventData },
+              machineState: { cs: getCurrentControlState(hashStates), es: extendedState, hs: history }
+            }
+          });
 
-        const nextOutputs = send_event({[auto_event]: eventData}, true);
+          const nextOutputs = send_event({ [auto_event]: eventData }, true);
 
-        tracer({
-          type: INTERNAL_OUTPUTS_MSG,
-          trace: {
-            outputs: nextOutputs,
-            machineState: {cs: getCurrentControlState(hashStates), es: extendedState, hs: history}
-          }
-        });
+          tracer({
+            type: INTERNAL_OUTPUTS_MSG,
+            trace: {
+              outputs: nextOutputs,
+              machineState: { cs: getCurrentControlState(hashStates), es: extendedState, hs: history }
+            }
+          });
 
-        return [].concat(outputs).concat(nextOutputs);
-      }
-      else if (is_auto_state[new_current_state] && new_current_state === currentState) {
-        // We found an eventless transition that returns to the same control state!
-        // This is forbidden as this may generate infinite loops on that stationary control state
-        // We throw in that case, as this is a breach of contract, one which we should
-        // detect at configuration time.
-        console.error(`Eventless transitions (event |${event}| in state |${currentState}|) cannot return to the same control state!! This is forbidden to avoid possible infinite loops.`);
-        tracer({
-          type: ERROR_MSG,
-          trace: {
-            info: {received: {[event]: eventData}},
+          return [].concat(outputs).concat(nextOutputs);
+        }
+        else {
+          // We found an eventless transition that returns to the same control state!
+          // This is forbidden as this may generate infinite loops on that stationary control state
+          // We throw in that case, as this is a breach of contract, one which we should
+          // detect at configuration time.
+          console.error(`Eventless transitions (event |${event}| in state |${currentState}|) cannot return to the same control state!! This is forbidden to avoid possible infinite loops.`);
+          tracer({
+            type: ERROR_MSG,
+            trace: {
+              info: { received: { [event]: eventData } },
+              message: `Eventless transitions (event |${event}| in state |${currentState}|) cannot return to the same control state!! This is forbidden to avoid possible infinite loops.`,
+              machineState: { cs: currentState, es: extendedState, hs: history }
+            }
+          });
+
+          throwKinglyError({
             message: `Eventless transitions (event |${event}| in state |${currentState}|) cannot return to the same control state!! This is forbidden to avoid possible infinite loops.`,
-            machineState: {cs: currentState, es: extendedState, hs: history}
-          }
-        });
-
-        throwKinglyError({message:`Eventless transitions (event |${event}| in state |${currentState}|) cannot return to the same control state!! This is forbidden to avoid possible infinite loops.`, location: "process_event"})
+            location: "process_event"
+          })
+        }
       }
       else return outputs;
     }
+    // CASE : There is no transition associated to that event from that state
     else {
-      // CASE : There is no transition associated to that event from that state
       console.warn(`There is no transition associated to the event |${event}| in state |${currentState}|!`);
       tracer({
         type: WARN_MSG,
         trace: {
-          info: {received: {[event]: eventData}},
+          info: { received: { [event]: eventData } },
           message: `There is no transition associated to the event |${event}| in state |${currentState}|!`,
-          machineState: {cs: currentState, es: extendedState, hs: history}
+          machineState: { cs: currentState, es: extendedState, hs: history }
         }
       });
 
@@ -664,11 +676,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
   }
 
   function leave_state(from, extendedState, hash_states) {
-    // NOTE : extendedState is passed as a parameter for symetry reasons, no real use for it so far
-    const state_from = hash_states[from];
-    const state_from_name = state_from.name;
-
-    history = updateHistory(history, stateAncestors, state_from_name);
+    history = updateHistory(history, stateAncestors, hash_states[from].name);
 
     console.info("left state", wrap(from));
   }
@@ -695,7 +703,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
       state_to = hash_states[to];
       state_to_name = state_to.name;
     } else {
-      throwKinglyError ("enter_state : unknown case! Not a state name, and not a history state to enter!");
+      throwKinglyError({ message: "enter_state : unknown case! Not a state name, and not a history state to enter!" });
     }
     hash_states[INIT_STATE].current_state_name = state_to_name;
 
@@ -705,7 +713,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
         message: isHistoryControlState(to)
           ? `Entering history state for ${to[to.deep ? DEEP : to.shallow ? SHALLOW : void 0]}`
           : `Entering state ${to}`,
-        machineState: {cs: getCurrentControlState(hash_states), es: extendedState, hs: history}
+        machineState: { cs: getCurrentControlState(hash_states), es: extendedState, hs: history }
       }
     });
     debug && console.info("AND TRANSITION TO STATE", state_to_name);
@@ -716,13 +724,13 @@ export function createStateMachineAPIs(fsmDef, settings) {
     tracer({
       type: INIT_INPUT_MSG,
       trace: {
-        info: {eventName: INIT_EVENT, eventData: initialExtendedState},
-        event: {[INIT_EVENT]: initialExtendedState},
-        machineState: {cs: getCurrentControlState(hash_states), es: extendedState, hs: history}
+        info: { eventName: INIT_EVENT, eventData: initialExtendedState },
+        event: { [INIT_EVENT]: initialExtendedState },
+        machineState: { cs: getCurrentControlState(hash_states), es: extendedState, hs: history }
       }
     });
 
-    return send_event({[INIT_EVENT]: initialExtendedState}, true);
+    return send_event({ [INIT_EVENT]: initialExtendedState }, true);
   }
 
 }
@@ -735,10 +743,11 @@ export function createStateMachineAPIs(fsmDef, settings) {
  * implements the `Observer` and `Observable` interface
  * @param {Stateful_FSM} fsm An executable machine, i.e. a function which accepts machine inputs
  * @param {Object.<CommandName, CommandHandler>} commandHandlers
- * @param {*} effectHandlers Typically anything necessary to perform effects. Usually this is a hashmap mapping an effect moniker to a function performing the corresponding effect.
+ * @param {*} effectHandlers Typically anything necessary to perform effects. Usually this is a hashmap mapping an
+ *   effect moniker to a function performing the corresponding effect.
  * @param {{initialEvent, terminalEvent, NO_ACTION}} options
  */
-export function makeWebComponentFromFsm({name, eventHandler, fsm, commandHandlers, effectHandlers, options}) {
+export function makeWebComponentFromFsm({ name, eventHandler, fsm, commandHandlers, effectHandlers, options }) {
   class FsmComponent extends HTMLElement {
     constructor() {
       if (name.split('-').length <= 1) throw `makeWebComponentFromFsm : web component's name MUST include a dash! Please review the name property passed as parameter to the function!`
@@ -756,7 +765,7 @@ export function makeWebComponentFromFsm({name, eventHandler, fsm, commandHandler
           if (actions === NO_ACTION) return;
           actions.forEach(action => {
             if (action === NO_ACTION) return;
-            const {command, params} = action;
+            const { command, params } = action;
             commandHandlers[command](this.eventSubject.next, params, effectHandlers, el);
           });
         }
