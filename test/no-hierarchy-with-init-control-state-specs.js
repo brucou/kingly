@@ -1,3 +1,10 @@
+/**
+ * The idea here is to test for the extra flexibility we added to start a machine.
+ * A Kingly machine can start in a user-provided control state, or have an initial
+ * transition (defined as a transition from the initial state INIT_STATE).
+ * The initial transition is already tested in other test files. We focus here on
+ * the scenario in which the user provides an initial control state.
+ */
 import * as QUnit from "qunitjs"
 import {clone, F, merge, T} from "ramda"
 import {
