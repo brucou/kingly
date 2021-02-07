@@ -1,8 +1,19 @@
+/**
+ * The test strategy here is to cover machine semantics for simple graphs.
+ * In particular, we want to check:
+ * - transitions without guards correctly evaluated
+ * - transitions with guards correctly evaluated
+ *   - when all guards are false
+ *   - when several guards are true (only first true guard should apply)
+ *   - some false, some true guards (first true guard should apply)
+ * - actions are correctly executed
+ * - events are correctly processed
+ */
 import * as QUnit from "qunitjs"
 import {clone, F, merge, T} from "ramda"
 import {
   ACTION_IDENTITY, arrayizeOutput,
-  createStateMachine, INIT_EVENT, INIT_STATE, NO_OUTPUT
+  createStateMachine, INIT_EVENT, INIT_STATE
 } from "../src"
 import {applyPatch} from "json-patch-es6"
 import {assertContract, isArrayUpdateOperations} from "../test/helpers"

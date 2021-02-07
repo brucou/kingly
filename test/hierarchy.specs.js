@@ -1,3 +1,22 @@
+/**
+ * The test strategy here is to cover machine semantics for complex graphs.
+ * In particular, we want to check the evaluation of:
+ * - automatic transitions
+ *   - initial transitions for compound states
+ *   - eventless transitions
+ *     - edge case: looping eventless transition
+ *     - base case
+ * - history transitions
+ *   - deep
+ *   - shallow
+ * We *may* check in the process for:
+ * - transitions with guards correctly evaluated
+ *   - when all guards are false
+ *   - when several guards are true (only first true guard should apply)
+ *   - some false, some true guards (first true guard should apply)
+ * - actions are correctly executed
+ * - events are correctly processed
+ */
 import {
   ACTION_IDENTITY, createStateMachine, INIT_EVENT, INIT_STATE, NO_OUTPUT, SHALLOW, DEEP,
   historyState
