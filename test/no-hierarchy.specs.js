@@ -128,6 +128,7 @@ function another_dummy_action_with_update(extendedState, event_data, settings) {
 QUnit.module("Testing createStateMachine(fsmDef, settings)", {});
 
 QUnit.test("event, no action, false guard", function exec_test(assert) {
+  // o -> A -ev[false]-> B
   const fsmDef = {
     states: { A: '', B: '' },
     events: ['ev'],
@@ -145,6 +146,7 @@ QUnit.test("event, no action, false guard", function exec_test(assert) {
 });
 
 QUnit.test("event, no action, true guard", function exec_test(assert) {
+  // o -> A -[true]-> B
   const fsmDef = {
     states: { A: '', B: '' },
     events: [],
@@ -166,6 +168,7 @@ QUnit.test("event, action, false guard", function exec_test(assert) {
     (extendedState, event_data, settings) => {
       assert.ok(true, false, `Guard is false, this action should not be called!`)
     });
+  // o -> A -[false]-> B
   const fsmDef = {
     states: { A: '', B: '' },
     events: ['ev'],
@@ -189,6 +192,7 @@ QUnit.test("event, action, true guard", function exec_test(assert) {
       assert.deepEqual(event_data, initialExtendedState, `action called with event_data as second parameter`);
       // assert.deepEqual(settings, default_settings, `action called with settings as third parameter`);
     });
+  // o -> A -ev[true]-> B
   const fsmDef = {
     states: { A: '', B: '' },
     events: ['ev'],
@@ -217,6 +221,8 @@ QUnit.test("event, 2 actions, [T,T] conditions, 1st action executed", function e
     (extendedState, event_data, settings) => {
       assert.ok(true, false, `This true guard comes second, this action should not be called!`)
     });
+  // o -> A -[true]-> B
+  //        |-[true]-> B
   const fsmDef = {
     states: { A: '', B: '' },
     events: ['ev'],
@@ -250,6 +256,8 @@ QUnit.test("event, 2 actions, [F,T] conditions, 2nd action executed", function e
     (extendedState, event_data, settings) => {
       assert.ok(true, false, `This true guard comes second, this action should not be called!`)
     });
+  // o -> A -[false]-> B
+  //        -[true ]-> B
   const fsmDef = {
     states: { A: '', B: '' },
     events: ['ev'],
@@ -283,6 +291,8 @@ QUnit.test("event, 2 actions, [T,F] conditions, 1st action executed", function e
     (extendedState, event_data, settings) => {
       assert.ok(true, false, `This true guard comes second, this action should not be called!`)
     });
+  // o -> A -ev[false]-> B
+  //        -ev[true ]-> B
   const fsmDef = {
     states: { A: '', B: '' },
     events: ['ev'],
@@ -310,6 +320,8 @@ QUnit.test("event, 2 actions, [F,F] conditions, no action executed", function ex
     (extendedState, event_data, settings) => {
       assert.ok(true, false, `This true guard comes second, this action should not be called!`)
     });
+  // o -> A -ev[false]-> A
+  //        -ev[false]-> A
   const fsmDef = {
     states: { A: '' },
     events: ['ev'],
@@ -333,6 +345,7 @@ QUnit.test("event, 2 actions, [F,F] conditions, no action executed", function ex
 });
 
 QUnit.test("event, 2 actions with no extendedState update, NOK -> A -> B, no guards", function exec_test(assert) {
+  // o -> A -EVENT1/dummy-> B
   const fsmDef = {
     states: { A: '', B: '' },
     events: [EVENT1],
@@ -350,6 +363,7 @@ QUnit.test("event, 2 actions with no extendedState update, NOK -> A -> B, no gua
 });
 
 QUnit.test("event, 2 actions with extendedState update, NOK -> A -> B, no guards", function exec_test(assert) {
+  // o -> A -EVENT1/dummy_with_update-> B
   const fsmDef = {
     states: { A: '', B: '' },
     events: [EVENT1],
