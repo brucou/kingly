@@ -1,5 +1,4 @@
 import * as QUnit from "qunitjs"
-import * as Rx from "rx"
 import {clone, F, merge, T} from "ramda"
 import {
   ACTION_IDENTITY, arrayizeOutput,

@@ -1,9 +1,12 @@
 /**
  * Tests include:
- * - flat machines, i.e. machine without compound states
- * - machines with hierarchy and advanced features (e.g., history)
- * - stateful and pure machine APIs
+ * - APIs
+ *   The test strategy consists of testing separately simple and complex machines; and
+ *   stateful and pure APIs, e.g. covering the space (simple, complex) x (stateful, pure):
+ *   - flat machines, i.e. machine without compound states
+ *   - machines with hierarchy and advanced features (e.g., history)
  * - conversion to plantUML
+ * - visualizer
  * - regression tests linked to solved issues
  * - miscellaneous auxiliary functions
  */
