@@ -479,6 +479,11 @@ export function isEventless(e) {
   return typeof e === 'undefined'
 }
 
+/**
+ * @description takes an output and turns it into an array
+ * @param {*} output
+ * @returns {*[]|null} if the output is null: null, if output is an array: output, else: [output]
+ */
 export function arrayizeOutput(output) {
   return output === NO_OUTPUT
     ? NO_OUTPUT

@@ -464,7 +464,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
         // This means the machine will continue processing inputs
         // using its current state
       }
-      else if (fsmState == null) {
+      else if (fsmState === null) {
         // Reinitialize the machine
         extendedState = initialExtendedState;
         history = initHistoryDataStructure(stateList);
@@ -523,7 +523,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
    * This works around an edge case discovered through testing.
    * With the fix implemented here, API users that send an INIT_EVENT will have it ignored.
    * INIT_EVENT is reserved and API users should not use it. This fix is for robustness purposes.
-   * @returns {FSM_Outputs}
+   * @returns {FSM_Outputs|null}
    */
   function send_event(event_struct, isInternalEvent) {
     assertContract(isEventStruct, [event_struct]);
@@ -579,7 +579,11 @@ export function createStateMachineAPIs(fsmDef, settings) {
       // CASE : There is a transition associated to that event
       console.log("found event handler!");
       console.info("WHEN EVENT ", event, eventData);
-      /* OUT : this event handler modifies the extendedState and possibly other data structures */
+
+      // The transition is evaluated:
+      // - no guards are satisfied => outputs = null
+      // - guards satisfied => outputs an array, possibly containing a null value
+      /** OUT: this event handler modifies the in-closure machine state (extendedState, control state, history state) */
       const {stop, outputs: rawOutputs} = eventHandler(extendedState, eventData, currentState);
       debug && !stop && console.warn("No guards have been fulfilled! We recommend to configure guards explicitly to" +
         " cover the full state space!")
@@ -591,13 +595,11 @@ export function createStateMachineAPIs(fsmDef, settings) {
       // Two cases here:
       // 1. Init handlers, when present on the current state, must be acted on immediately
       // This allows for sequence of init events in various state levels
-      // For instance, L1: init -> L2:init -> L3:init -> L4: stateX
-      // In this case eventData will carry on the data passed on from the last event (else we loose
-      // the extendedState?)
-      // 2. transitions with no events associated, only conditions (i.e. transient states)
+      // For instance, L1:init -> L2:init -> L3:init -> L4: stateX
+      // In this case eventData will carry on the data passed on from the last (non init) event
+      // 2. eventless transitions (i.e. transient states)
       // NOTE : the guard is to defend against loops occuring when an AUTO transition fails to advance and stays
-      // in the same control state!! But by contract that should never happen : all AUTO transitions should advance!
-      // TODO : test that case, what is happening? I should add a branch and throw!!
+      // in the same control state!! But by contract that should never happen: all AUTO transitions should advance!
       if (is_auto_state[new_current_state] && new_current_state !== currentState) {
         // CASE : transient state with no triggering event, just conditions
         // automatic transitions = transitions without events
@@ -625,8 +627,27 @@ export function createStateMachineAPIs(fsmDef, settings) {
         });
 
         return [].concat(outputs).concat(nextOutputs);
-      } else return outputs;
-    } else {
+      }
+      else if (is_auto_state[new_current_state] && new_current_state === currentState) {
+        // We found an eventless transition that returns to the same control state!
+        // This is forbidden as this may generate infinite loops on that stationary control state
+        // We throw in that case, as this is a breach of contract, one which we should
+        // detect at configuration time.
+        console.error(`Eventless transitions (event |${event}| in state |${currentState}|) cannot return to the same control state!! This is forbidden to avoid possible infinite loops.`);
+        tracer({
+          type: ERROR_MSG,
+          trace: {
+            info: {received: {[event]: eventData}},
+            message: `Eventless transitions (event |${event}| in state |${currentState}|) cannot return to the same control state!! This is forbidden to avoid possible infinite loops.`,
+            machineState: {cs: currentState, es: extendedState, hs: history}
+          }
+        });
+
+        throwKinglyError({message:`Eventless transitions (event |${event}| in state |${currentState}|) cannot return to the same control state!! This is forbidden to avoid possible infinite loops.`, location: "process_event"})
+      }
+      else return outputs;
+    }
+    else {
       // CASE : There is no transition associated to that event from that state
       console.warn(`There is no transition associated to the event |${event}| in state |${currentState}|!`);
       tracer({

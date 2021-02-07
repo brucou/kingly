@@ -40,13 +40,13 @@
  * @typedef {InconditionalTransition | ConditionalTransition} Transition
  */
 /**
- * @typedef {{from: ControlState, to: ControlState|HistoryState, event: EventLabel, action: ActionFactory}} InconditionalTransition
+ * @typedef {{from: ControlState, to: ControlState|HistoryState, event?: EventLabel, action: ActionFactory}} InconditionalTransition
  *   Inconditional_Transition encodes transition with no guards attached. Every time the specified event occurs, and
  *   the machine is in the specified state, it will transition to the target control state, and invoke the action
  *   returned by the action factory
  */
 /**
- * @typedef {{from: ControlState, event: EventLabel, guards: Array<Condition>}} ConditionalTransition Transition for the
+ * @typedef {{from: ControlState, event?: EventLabel, guards: Array<Condition>}} ConditionalTransition Transition for the
  * specified state is contingent to some guards being passed. Those guards are defined as an array.
  */
 /**

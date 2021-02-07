@@ -141,7 +141,7 @@ QUnit.test("event, no action, false guard", function exec_test(assert) {
   const fsm = createStateMachine(fsmDef, default_settings);
   // @ts-ignore
   const result = fsm({ ev: initialExtendedState });
-  assert.deepEqual(result, [null], `event starts the state machine`);
+  assert.deepEqual(result, [null], `If a transition exists, it is evaluated; if no guards are satisfied, the evaluation returns null; evaluation results are put into an array so [null] is returned`);
 });
 
 QUnit.test("event, no action, true guard", function exec_test(assert) {

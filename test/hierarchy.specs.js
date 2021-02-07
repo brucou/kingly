@@ -24,9 +24,9 @@ const EVENT5 = 'event5';
 
 /**
  *
- * @param {FSM_Model} extendedState
+ * @param {*} extendedState
  * @param {Operation[]} operations
- * @returns {FSM_Model}
+ * @returns {*}
  */
 function applyJSONpatch(extendedState, operations) {
   assertContract(isArrayUpdateOperations, [operations],
@@ -195,7 +195,9 @@ QUnit.test("shallow history transitions, event CASCADING transitions", function 
     { [EVENT4]: {} },
   ];
   const fsm = createStateMachine(fsmDef, {debug:{console}});
+  // @ts-ignore
   const outputSequence = inputSequence.map(fsm);
+  // @ts-ignore
   const formattedResults = outputSequence.map(output => output && output.map(formatResult));
   assert.deepEqual(formattedResults, [
     [],
@@ -253,7 +255,9 @@ QUnit.test("deep history transitions, event CASCADING transitions", function exe
     { [EVENT4]: {} },
   ];
   const fsm = createStateMachine(fsmDef);
+  // @ts-ignore
   const outputSequence = inputSequence.map(fsm);
+  // @ts-ignore
   const formattedResults = outputSequence.map(output => output && output.map(formatResult));
   assert.deepEqual(formattedResults, [
     [],
@@ -324,8 +328,10 @@ QUnit.test("shallow history transitions FROM INSIDE, event CASCADING transitions
     { [EVENT4]: {} },
   ];
   const fsm = createStateMachine(fsmDef, default_settings);
+  // @ts-ignore
   const outputSequence = inputSequence.map(fsm);
   console.log(`outputSequence `, outputSequence)
+  // @ts-ignore
   const formattedResults = outputSequence.map(output => output && output.map(formatResult));
   assert.deepEqual(formattedResults, [
     // [NO_OUTPUT, NO_OUTPUT],
@@ -395,7 +401,9 @@ QUnit.test("deep history transitions FROM INSIDE, event CASCADING transitions", 
     { [EVENT4]: {} },
   ];
   const fsm = createStateMachine(fsmDef, default_settings);
+  // @ts-ignore
   const outputSequence = inputSequence.map(fsm);
+  // @ts-ignore
   const formattedResults = outputSequence.map(output => output && output.map(formatResult));
   assert.deepEqual(formattedResults, [
     // [NO_OUTPUT, NO_OUTPUT],
@@ -436,7 +444,9 @@ QUnit.test("eventless x atomic transitions", function exec_test(assert) {
     { [EVENT2]: {} },
   ];
   const fsm = createStateMachine(fsmDef, {debug:{console}});
+  // @ts-ignore
   const outputSequence = inputSequence.map(fsm);
+  // @ts-ignore
   const formattedResults = outputSequence.map(output => output && output.map(formatResult));
   assert.deepEqual(formattedResults, [
     // [
@@ -452,4 +462,62 @@ QUnit.test("eventless x atomic transitions", function exec_test(assert) {
       }
     ]
   ], `eventless transitions are correctly taken`);
+});
+
+QUnit.test("eventless transitions returning to origin control state at creation time", function exec_test(assert) {
+  const states = { [A]: ''};
+  const fsmDef = {
+    states,
+    events: [],
+    initialExtendedState: {},
+    transitions: [
+      { from: INIT_STATE, event: INIT_EVENT, to: A, action: ACTION_IDENTITY },
+      {
+        from: A, guards: [
+          { predicate: () => true, to: A, action: ACTION_IDENTITY },
+        ]
+      },
+    ],
+    updateState: applyJSONpatch,
+  };
+  const fsm = createStateMachine(fsmDef, {debug:{console}});
+  assert.ok(fsm instanceof Error, `It is not possible to create a machine with an eventless transition that loops back to the same origin control state`)
+});
+
+QUnit.test("eventless transitions returning to origin control state at runtime", function exec_test(assert) {
+  const states = { [A]: '', [B]: '', };
+  const fsmDef = {
+    states,
+    events: [],
+    initialExtendedState: {},
+    transitions: [
+      { from: INIT_STATE, event: INIT_EVENT, to: A, action: ACTION_IDENTITY },
+      { from: A, event: EVENT1, to:B, action: ACTION_IDENTITY },
+      {
+        from: B, guards: [
+          { predicate: () => true, to: B, action: ACTION_IDENTITY },
+        ]
+      },
+    ],
+    updateState: applyJSONpatch,
+  };
+  const inputSequence = [
+    {[EVENT1]: {}}
+  ];
+  const fsm = createStateMachine(fsmDef, {debug:{console}});
+  if (fsm instanceof Error) {
+    assert.ok(false, `Test failing at creating the machine! Please investigate.`)
+    return
+  }
+  const outputSequence = inputSequence.map(fsm);
+  // @ts-ignore
+  const formattedResults = outputSequence.map(output => {
+    if (output instanceof Error){
+      return "Error"
+    }
+    else return output && output.map(formatResult)
+  });
+  assert.deepEqual(formattedResults, [
+      "Error"
+  ], `Evaluating eventless transitions that loop back to the same control state produces an error`);
 });
