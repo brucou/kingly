@@ -82,27 +82,6 @@
  * Miscellaneous settings including how to update the machine's state and debug
  * configuration
  * */
-/** @typedef {{merge: MergeObsFn, from: FromObsFn, filter: FilterObsFn, map: MapObsFn, share:ShareObsFn, ...}} FSM$_Settings */
-/**
- * @typedef {function (Array<Observable>) : Observable} MergeObsFn Similar to Rxjs v4's `Rx.Observable.merge`. Takes
- * an array of observables and return an observable which passes on all outputs emitted by the observables in the array.
- */
-/**
- * @typedef {function (value) : Observable} FromObsFn Similar to Rxjs v4's `Rx.Observable.from`. Takes
- * a value and lift it into an observable which completes immediately after emitting that value.
- */
-/**
- * @typedef {function (value) : Observable} FilterObsFn Similar to Rxjs v4's `Rx.Observable.filter`. Takes
- * a value and lift it into an observable which completes immediately after emitting that value.
- */
-/**
- * @typedef {function (value) : Observable} MapObsFn Similar to Rxjs v4's `Rx.Observable.map`. Takes
- * a value and lift it into an observable which completes immediately after emitting that value.
- */
-/**
- * @typedef {function (value) : Observable} ShareObsFn Similar to Rxjs v4's `Rx.Observable.share`. Takes
- * a value and lift it into an observable which completes immediately after emitting that value.
- */
 /**
  * @typedef {Object.<EventLabel, EventData>} LabelledEvent extended state for a given state machine
  */
@@ -119,7 +98,7 @@
  * @property {Number} transitionIndex
  */
 /**
- * @typedef {function(historyType: HistoryType, controlState: ControlState): HistoryState} HistoryStateFactory
+ * @typedef {function(HistoryType, ControlState): HistoryState} HistoryStateFactory
  */
 /**
  * @typedef {Object.<HistoryType, HistoryDict>} HistoryState history object containing deeep and shallow history states
@@ -129,7 +108,7 @@
  * @typedef {Object.<ControlState, ControlState>} HistoryDict Maps a compound control state to its history state
  */
 /**
- * @typedef {DEEP | SHALLOW} HistoryType
+ * @typedef {"deep" | "shallow"} HistoryType
  */
 /** @typedef {String} ControlState Name of the control state */
 /** @typedef {String} EventLabel */
@@ -142,6 +121,7 @@
 /**
  * @typedef {*} ExtendedStateUpdate
  */
+/** @typedef {null} NO_OUTPUT
 /** @typedef {* | NO_OUTPUT} MachineOutput well it is preferrable that that be an object instead of a primitive */
 
 
@@ -173,16 +153,18 @@
  * @typedef {String} CommandName
  */
 /**
- * @typedef {function(SubjectEmitter, CommandParams, EffectHandlers, Element, Subject): ()} CommandHandler
+ * @typedef {function(SubjectEmitter, CommandParams, EffectHandlers, Element, Subject): *} CommandHandler
  * A command handler performs effect, possibly relying on effects implementation included in the effect handlers
  * parameter. A command handler also receives parameters for its execution and two subjects, one for receiving
- * events, another one for emitting them. Lastly, a command handler may receive an Element which is generally used
- * for rendering purposes
- */
-/**
- * @typedef {function(): Subject} SubjectFactory
+ * events, another one for emitting them (currently unused). Lastly, a command handler may
+ * receive an Element which is generally used for rendering purposes
  */
 
 /**
  * @typedef {*} Operation
+ */
+/**
+ * @typedef {*} CommandParams
+ *//**
+ * @typedef {*} EffectHandlers
  */

@@ -734,6 +734,8 @@ export function createStateMachineAPIs(fsmDef, settings) {
 
 }
 
+// TODO: have a look at implementation of React-state-driven and see if makes sense
+// also test it with the codesandbox from old versions *ivi for instance
 /**
  * @typedef {Object} WebComponentFactoryParams
  * @property {String} name Name for the web component. Must include at least one hyphen per custom
