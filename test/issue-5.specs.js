@@ -13,7 +13,6 @@ const cartesian = (a, b, ...c) => (b ? cartesian(f(a, b), ...c) : a);
 QUnit.test("debug settings, event, no action, false guard", function exec_test(
   assert
 ) {
-  // TODO: copy from the yed2Kingly test
   const events = ["event3", "event2", "event1"];
   const event1 = {event1: void 0};
   const event2 = {event2: void 0};

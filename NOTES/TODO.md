@@ -1,7 +1,4 @@
 # TODO
-- rewrite: for recruitment purposes
-  - propertly the machine library
-  - rewrite the test also to be more understandable (with graphs??)
 - Examples
   - I could also redo the wizard form example!!
     - same, first
@@ -13,13 +10,16 @@
   - Routing demo would be great to showcase dynamic import, i.e. lazy loading 
   - good example of routing and animations :  https://github.com/sdras/page-transitions-travelapp
 - API
+  - only export the right functions
+    - may have to check what is used by react-state-driven and vue...
+      - vue-state-driven do just like react-state-driven and remove the dependency on kingly!
+        - https://github.com/brucou/vue-state-driven/blob/master/src/main.js
+        - import { NO_OUTPUT, COMMAND_RENDER } from "kingly"
+        - update the example that uses it?
+    - remove https://github.com/brucou/slim/blob/master/tests/end-to-end.specs.js NO_OUTPUT from slim
   - `TEST!`, document and release officially the version with state reset/backtracking etc. (createPureStateMachine)
     - haven't written a test to check that the history state is not modified between different execution of the pure machine
     - on an hierarchical/non machine: one pure machine run with history change -> state1. reset run-> state 2. state2 === state1
-
-
-
-
     - on an hierarchical/non machine: one pure machine run with history change -> state1. event [guard1]-> state 2. state1 back with ext state passing guard2 event[guard2]-> state 3. All this with history change. state 2. transition to H*. state3 transition to H*.
       - check history states are what they should be. Rather check that the right actions are run -- thats history-implementation independent
     - on an hierarchical/non machine: one pure machine run -> state1. event1 -> state 2 (modify ext state1). back to state1 and event2 -> state 3 (modify ext state1).
@@ -225,6 +225,7 @@ bigger, call it all-transitions* ?? to avoid changing everything
 emachine is not in sync with the gen. Should identify that early and return a warning? Generally
 error is ...[0] is undefined. That means an event was sent and could not be handleed by the state
  machine
+ 
  
  # Roadmap
 - would be good a function `clone` which returns a new state machine, with the same state as the 
