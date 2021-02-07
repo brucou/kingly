@@ -783,10 +783,6 @@ export function formatUndefinedInJSON(obj){
   return JSON.stringify(obj, (key,value)=> {if (value === undefined) return "undefined"; else return value})
 }
 
-export function getCurrentControlState(hash_states) {
-  return hash_states[INIT_STATE].current_state_name
-}
-
 export function wrapUpdateStateFn(userProvidedUpdateStateFn, {throwKinglyError, tracer}){
   return (extendedState, updates) => {
     const fnName = userProvidedUpdateStateFn.name || "";
