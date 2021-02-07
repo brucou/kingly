@@ -16,6 +16,10 @@
   - `TEST!`, document and release officially the version with state reset/backtracking etc. (createPureStateMachine)
     - haven't written a test to check that the history state is not modified between different execution of the pure machine
     - on an hierarchical/non machine: one pure machine run with history change -> state1. reset run-> state 2. state2 === state1
+
+
+
+
     - on an hierarchical/non machine: one pure machine run with history change -> state1. event [guard1]-> state 2. state1 back with ext state passing guard2 event[guard2]-> state 3. All this with history change. state 2. transition to H*. state3 transition to H*.
       - check history states are what they should be. Rather check that the right actions are run -- thats history-implementation independent
     - on an hierarchical/non machine: one pure machine run -> state1. event1 -> state 2 (modify ext state1). back to state1 and event2 -> state 3 (modify ext state1).

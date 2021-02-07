@@ -137,7 +137,7 @@
  * @typedef {Object} ContractDef
  * @property {String} name name for the contract
  * @property {Boolean} shouldThrow whether the contract should thrown an exception or alternatively return one
- * @property {function(FSM_Def, injected):ContractCheck} predicate array of contract definitions
+ * @property {function(FSM_Def, *):ContractCheck} predicate array of contract definitions
  */
 /**
  * @typedef {Object} ContractCheck
@@ -145,7 +145,7 @@
  * @property {{message:String, info:*}} blame information about the cause for the contract failure. The
  * `message` property is destined to the developer (for instnce can be printed in the console). Info aims
  * at providing additional data helping to track the error cause
- * @property {function(FSM_Def, injected):ContractCheck} predicate array of contract definitions
+ * @property {function(FSM_Def, *):ContractCheck} predicate array of contract definitions
  */
 
 // Component types
@@ -167,4 +167,20 @@
  * @typedef {*} CommandParams
  *//**
  * @typedef {*} EffectHandlers
+ */
+/**
+ * @typedef {function(*):*} SubjectEmitter
+ */
+/**
+ * @typedef {Object} AnonymousObserver
+ * @property {SubjectEmitter} next
+ * @property {function(*):*} [error]
+ * @property {function(*):*} [complete]
+ */
+/**
+ * @typedef {Object} Subject
+ * @property {function(AnonymousObserver):*} subscribe
+ * @property {function(*):*} next
+ * @property {function(*):*} [error]
+ * @property {function(*):*} [complete]
  */

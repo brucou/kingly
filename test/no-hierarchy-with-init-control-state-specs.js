@@ -3,7 +3,7 @@ import * as Rx from "rx"
 import {clone, F, merge, T} from "ramda"
 import {
   ACTION_IDENTITY, arrayizeOutput,
-  createStateMachine, INIT_EVENT, INIT_STATE, KinglyError, NO_OUTPUT
+  createStateMachine, INIT_EVENT, INIT_STATE, KinglyError
 } from "../src"
 import {applyPatch} from "json-patch-es6"
 import {assertContract, isArrayUpdateOperations} from "../test/helpers"

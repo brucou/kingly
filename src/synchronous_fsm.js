@@ -38,7 +38,7 @@ function alwaysTrue() {
 };
 
 /**
- * Processes the hierarchically nested states and returns miscellaneous objects derived from it:
+ * @description Processes the hierarchically nested states and returns miscellaneous objects derived from it:
  * `is_group_state`: Hash matching keys (state names) to whether that state is a nested state
  * `hash_states`: Hierarchically nested object whose properties are the nested states.
  * - Nested states inherit (prototypal inheritance) from the containing state.
@@ -145,8 +145,9 @@ export function createPureStateMachine(fsmDef, settings) {
 }
 
 /**
- * Creates an instance of state machine from a set of states, transitions, and accepted events. The initial
- * extended state for the machine is included in the machine definition.
+ * @description Creates an instance of state machine from a set of states, transitions,
+ * and accepted events. The initial extended state for the machine is included
+ * in the machine definition.
  * @param {FSM_Def} fsmDef
  * @param {FSM_Settings} settings
  * @return {{withProtectedState: Stateful_FSM, withPureInterface: Pure_FSM}|Error}
@@ -186,11 +187,9 @@ export function createStateMachineAPIs(fsmDef, settings) {
   // - is `stateName` a compound state: `isGroupState[stateName]`
   // - what computation to run in `stateName`:
   //   `hashStates[stateName][event]` has the event handler for `event`
-  // NOTE: we use JS prototypal inheritance to make this work even when
-  // A < ... < B. and the event handler in configured on parent A, and not on B
-  // When the machine is in state B, it must answer to the event as A would
-  // - what control state is the machine in:
-  //   `hashStates[INIT_STATE].current_state_name`
+  //    NOTE: we use JS prototypal inheritance to make this work even when
+  //    A < ... < B. and the event handler in configured on parent A, and not on B
+  //    When the machine is in state B, it must answer to the event as A would
   const hashStatesStruct = buildNestedStateStructure(controlStates);
   // @type {Object<state_name,boolean>}
   let isInitState = {};
@@ -372,8 +371,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
   let extendedState = initialExtendedState;
   let cs = INIT_STATE;
 
-  // Run the machine's initial transition so it positions itself
-  // in the configured control state
+  // Run the machine's initial transition
   try {
     start();
   }
@@ -387,6 +385,8 @@ export function createStateMachineAPIs(fsmDef, settings) {
         machineState: { cs: INIT_STATE, es: extendedState, hs: history }
       }
     });
+    console && console.error(`An error occurred when starting the machine`, e)
+
     return e
   }
 
@@ -734,8 +734,6 @@ export function createStateMachineAPIs(fsmDef, settings) {
 
 }
 
-// TODO: have a look at implementation of React-state-driven and see if makes sense
-// also test it with the codesandbox from old versions *ivi for instance
 /**
  * @typedef {Object} WebComponentFactoryParams
  * @property {String} name Name for the web component. Must include at least one hyphen per custom
@@ -767,9 +765,9 @@ export function makeWebComponentFromFsm({ name, eventHandler, fsm, commandHandle
           const actions = fsm(eventStruct);
 
           if (actions instanceof Error) {
-            console && console.error(actions);
-            // NOTE: we do not throw here, the web component will fail
-            // but the rest of the page may go on.
+            // NOTE: we do not throw here, the web component will fail but
+            // the rest of the page may go on. We log and swallow the errors
+            console && console.log(actions)
           }
           else if (actions === NO_ACTION) return;
           else {
@@ -785,6 +783,7 @@ export function makeWebComponentFromFsm({ name, eventHandler, fsm, commandHandle
     }
 
     static get observedAttributes() {
+      // There are no attributes
       return [];
     }
 
@@ -798,10 +797,7 @@ export function makeWebComponentFromFsm({ name, eventHandler, fsm, commandHandle
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
-      // simulate a new creation every time an attribute is changed
-      // i.e. they are not expected to change
-      this.constructor();
-      this.connectedCallback();
+      // There are no attributes
     }
   }
 
