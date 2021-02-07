@@ -330,7 +330,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
               console.info("with extended state: ", extendedState);
 
               // allows for chaining and stop chaining guard
-              return { stop: true, outputs};
+              return { stop: true, outputs };
             }
             else {
               // CASE : guard for transition is not fulfilled
@@ -682,14 +682,14 @@ export function createStateMachineAPIs(fsmDef, settings) {
 
     // CASE: history state (H)
     if (isHistoryControlState(to)) {
-      const historyType = to[DEEP]? DEEP : to[SHALLOW]? SHALLOW : void 0;
+      const historyType = to[DEEP] ? DEEP : to[SHALLOW] ? SHALLOW : void 0;
       const historyTarget = to[historyType];
 
       // Contract: history state MUST be associated to compound state (else there is no history to be had)
-      if (!isInitState[historyTarget] ){
+      if (!isInitState[historyTarget]) {
         const message = `Configured a history state unrelated to a compound state! The behaviour of the machine is thus unspecified. Please review your machine configuration`;
         debug && console && console.error(message);
-        throwKinglyError({message})
+        throwKinglyError({ message })
       }
 
       // Edge case: If there is no history for the compound state, then we evaluate the
@@ -735,16 +735,19 @@ export function createStateMachineAPIs(fsmDef, settings) {
 }
 
 /**
- * TODO: adjust the types to the signature
- * @param {String} name name for the web component. Must include at least one hyphen per custom
+ * @typedef {Object} WebComponentFactoryParams
+ * @property {String} name Name for the web component. Must include at least one hyphen per custom
  * components' specification
- * @param {Subject} eventHandler A factory function which returns a subject, i.e. an object which
+ * @property {Subject} eventHandler A factory function which returns a subject, i.e. an object which
  * implements the `Observer` and `Observable` interface
- * @param {Stateful_FSM} fsm An executable machine, i.e. a function which accepts machine inputs
- * @param {Object.<CommandName, CommandHandler>} commandHandlers
- * @param {*} effectHandlers Typically anything necessary to perform effects. Usually this is a hashmap mapping an
+ * @property {Stateful_FSM} fsm An executable machine, i.e. a function which accepts machine inputs
+ * @property {Object.<CommandName, CommandHandler>} commandHandlers
+ * @property {*} effectHandlers Typically anything necessary to perform effects. Usually this is a hashmap mapping an
  *   effect moniker to a function performing the corresponding effect.
- * @param {{initialEvent, terminalEvent, NO_ACTION}} options
+ * @property {{initialEvent, terminalEvent, NO_ACTION}} options
+ */
+/**
+ * @param {WebComponentFactoryParams} webComponentFactoryParams
  */
 export function makeWebComponentFromFsm({ name, eventHandler, fsm, commandHandlers, effectHandlers, options }) {
   class FsmComponent extends HTMLElement {
@@ -761,12 +764,20 @@ export function makeWebComponentFromFsm({ name, eventHandler, fsm, commandHandle
         next: eventStruct => {
           const actions = fsm(eventStruct);
 
-          if (actions === NO_ACTION) return;
-          actions.forEach(action => {
-            if (action === NO_ACTION) return;
-            const { command, params } = action;
-            commandHandlers[command](this.eventSubject.next, params, effectHandlers, el);
-          });
+          if (actions instanceof Error) {
+            console && console.error(actions);
+            // NOTE: we do not throw here, the web component will fail
+            // but the rest of the page may go on.
+          }
+          else if (actions === NO_ACTION) return;
+          else {
+            actions.forEach(action => {
+              if (action === NO_ACTION) return;
+              const { command, params } = action;
+              commandHandlers[command](this.eventSubject.next, params, effectHandlers, el);
+            })
+          }
+          ;
         }
       });
     }
