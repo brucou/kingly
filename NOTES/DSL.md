@@ -308,14 +308,11 @@ line returns and ident can be used as they are not significant.
   - do it directly from arbitraries?? YES, a Turing language is the best here (ADR)
   - I do not want to do that from the specs! (cause that's impl.) Want to do it independently But i want ot test the specs so it should follow the specs... It is the PBT that provides a different take at the specs and should allow to find errors in the specs
 
-- 773 782 856 hygienic number
-- 773 782 850 hygienic number
-
 ADR:
 - cannot check properties while generating because properties may depend on the future, e.g. inputs that have not been generated yet
 
 ALMOST:
-- describe PATHS of the machine not sequences of inputs!
+- describe PATHS of the machine not sequences of inputs! sequence of inputs is regular BDD
   - so name each transition (after the `|` character)
   - paths are t1-t2-(exp)?-(exp)+{MIN, MAX}-(exp)*{MIN, MAX}-t1, t2- any -
     - default of MAX is 2, we don't want too many
@@ -351,7 +348,7 @@ ADR:
 - I NEED TO DEFINE PROPERTIES INDEPENDENTLY so I compose bigger formulas from smaller formulas!
 - NOOO!! too compllicated implementation and syntax (formulas will use variables and a substitution mechanism has to be dfined - that's defining a whole expression language, don't wanna go there)
 - work with the predefined patterns but try to write them so they are intuitive
-- No LTL syntax too complicated
+- No LTL syntax too complicated to write and hard ot reason about for naive users
   - - ¬◇□∧∨○
   - Note that wikipedia use capital letter GXUW etc. Should I do same? or provide the symbols somehow
 - could use a marble-like syntax but also complicated in the end, better to directly use JS and an embedded DSL (maybe template language?)
@@ -359,6 +356,7 @@ ADR:
 
 
 **TODO: I AM HERE**: clean below, keep only what has been decided which is pretty much delete all. But keep examples of properties for the chess and conduit app too. Try to express the props in the marble-like language but don't sweat it. The more important is to use the proposed syntax to see how it handles long property definition or how it looks like.
+- also decide if I should include examples in addition to paths. i.e. regular BDD
 
 ## Counter example
 Events: button click; Outputs: render command with counter to render:

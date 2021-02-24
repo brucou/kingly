@@ -17,6 +17,7 @@
         - import { NO_OUTPUT, COMMAND_RENDER } from "kingly"
         - update the example that uses it?
     - remove https://github.com/brucou/slim/blob/master/tests/end-to-end.specs.js NO_OUTPUT from slim
+    - try slim/yed2kingly with 0.28.5, them merge to master!
   - `TEST!`, document and release officially the version with state reset/backtracking etc. (createPureStateMachine)
     - haven't written a test to check that the history state is not modified between different execution of the pure machine
     - on an hierarchical/non machine: one pure machine run with history change -> state1. reset run-> state 2. state2 === state1
