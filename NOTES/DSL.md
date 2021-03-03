@@ -75,8 +75,10 @@ Then
 NOTE:
 - syntax :x:, :y: (state identifier) to define a compound state
   - achtung this opens the door to hypergraph, so add some control that one :x: can only be in one compound state or sth
-  - or leave it, but let the user pick his favorite, the one that will appear in the graph
-
+  - or leave it, 
+    - but let the user pick his favorite, the one that will appear in the graph
+    - or pick the compound state automatically, or generate a few and let user pick 
+    
 # Code
 ## Events
 Autofilled by the compiler. The event idenfifiers are provided by the user
@@ -209,7 +211,8 @@ ADR:
 - initialControlState is :0: by convention (or :0: (identifier) if that is useful)
 - settings are defined with const settings = {...} in the last line of the file .settings, no exports
 - imports are in most modular languages and are alike while exports vary widely
-- we want to use this in other language than JavaScript too
+  - we want to use this in other language than JavaScript too
+  - so describe imports/dependencies in a language-agnostic way
 - we will produce only one concatenated file with everything inside for production so need for export internally
 - may be necessaary at the end of the large file though to export the final machine or app
 -
@@ -334,10 +337,10 @@ We need to specify for each path generated the properties that hold on that path
 Or put the properties directly below the path?
 
 ```gherkin
-Scenario fragment expression_identifier
+Scenario fragment <expression_identifier>
 r1-r2-...
 
-Scenario path identifier
+Scenario path <identifier>
 t1-t2-(exp)?-(exp)+{MAX}-(exp)*{MAX}-t1 or t2- any -
 Satisfies property description                       | javascript function identifier
 Satisfies property description                       | javascript function identifier
