@@ -1,9 +1,10 @@
 import * as QUnit from "qunitjs"
 import { clone, F, merge, T } from "ramda"
 import {
-  ACTION_IDENTITY, computeHistoryMaps, INIT_EVENT, INIT_STATE, mapOverTransitionsActions, reduceTransitions
+  ACTION_IDENTITY, computeHistoryMaps, INIT_EVENT, INIT_STATE
 } from "../src"
-import { formatResult } from "./helpers"
+import { formatResult, } from "./helpers"
+import { mapOverTransitionsActions, reduceTransitions} from "../src/helpers"
 
 const a_value = "some value";
 const another_value = "another value";

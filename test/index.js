@@ -2,6 +2,7 @@
  * Tests include:
  * - APIs
  * TODO: update after updating tests with the 4 identified main test cases. Cf. test strategy
+ * keep a link to the strategy.md well visible
  * keep issue 5
  *   The test strategy consists of testing separately simple and complex machines; and
  *   stateful and pure APIs, e.g. covering the space (simple, complex) x (stateful, pure):
@@ -24,5 +25,4 @@ import './errors-specs'
 import './contracts.ad-hoc.specs'
 import './issue-5.specs'
 QUnit.dump.maxDepth = 50;
-
 

@@ -201,8 +201,8 @@ Automated visualization works well with simple graphs, but seems to encounter tr
 ## Roadmap v1.X: consolidate
 - [ ] support for live, interactive debugging
   - render time machine
-- [ ] add cloning API (useful for testing, to avoid replaying all machine inputs to get it back to a given state)
-- [ ] add reset API 
+- [x] add cloning API (useful for testing, to avoid replaying all machine inputs to get it back to a given state)
+- [x] add reset API 
 - [ ] document serialization support (already implemented in core, to implement in compiler too. Cf. https://github.com/brucou/kingly/issues/8)
 - [ ] compiler should generate code optimized for debugging or size (not for speed, I don't believe there is much to gain there). Configurable via flags. Right now it is something in the middle.
 

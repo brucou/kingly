@@ -1,9 +1,10 @@
 import * as QUnit from "qunitjs"
 import {clone, F, merge, T} from "ramda"
 import {
-  ACTION_IDENTITY, arrayizeOutput,
+  ACTION_IDENTITY,
   createPureStateMachine, INIT_EVENT, INIT_STATE, NO_OUTPUT
 } from "../src"
+import {arrayizeOutput} from "../src/helpers"
 import {applyPatch} from "json-patch-es6"
 import {assertContract, isArrayUpdateOperations} from "../test/helpers"
 import {CONTRACT_MODEL_UPDATE_FN_RETURN_VALUE} from "../src/properties"

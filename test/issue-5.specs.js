@@ -1,6 +1,7 @@
 import * as QUnit from "qunitjs";
-import {ACTION_IDENTITY, createStateMachine, formatUndefinedInJSON} from "../src";
+import {ACTION_IDENTITY, createStateMachine} from "../src";
 import {tracer} from "courtesan";
+import { formatUndefinedInJSON } from "../src/helpers"
 
 QUnit.module("Fixing issue 5", {});
 

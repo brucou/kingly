@@ -1,9 +1,10 @@
 import * as QUnit from "qunitjs"
 import {
-  ACTION_IDENTITY, createStateMachine, INIT_EVENT, INIT_STATE, KinglyError, mergeOutputsFn
+  ACTION_IDENTITY, createStateMachine, INIT_EVENT, INIT_STATE
 } from "../src"
 import {applyJSONpatch} from "./helpers"
 import {fsmContracts} from "../src/contracts"
+import { KinglyError } from "../src/helpers"
 
 const default_settings = {};
 const debug_settings = Object.assign({}, default_settings, {
