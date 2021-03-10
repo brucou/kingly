@@ -483,7 +483,8 @@ QUnit.test("eventless x atomic transitions", function exec_test(assert) {
   ], `eventless transitions are correctly taken`);
 });
 
-QUnit.test("eventless transitions returning to origin control state at creation time", function exec_test(assert) {
+// Note: to remove when 1.0 because the machine does not throw anymore.
+QUnit.skip("eventless transitions returning to origin control state at creation time", function exec_test(assert) {
   const states = { [A]: ''};
   const fsmDef = {
     states,
@@ -503,7 +504,8 @@ QUnit.test("eventless transitions returning to origin control state at creation 
   assert.ok(fsm instanceof Error, `It is not possible to create a machine with an eventless transition that loops back to the same origin control state`)
 });
 
-QUnit.test("eventless transitions returning to origin control state at runtime", function exec_test(assert) {
+// Note: to remove when 1.0 because the machine does not throw anymore.
+QUnit.skip("eventless transitions returning to origin control state at runtime", function exec_test(assert) {
   const states = { [A]: '', [B]: '', };
   const fsmDef = {
     states,

@@ -646,11 +646,6 @@ export function createStateMachineAPIs(fsmDef, settings) {
               machineState: { cs: cs, es: extendedState, hs: history }
             }
           });
-
-          throwKinglyError({
-            message: `Eventless transitions (event |${event}| in state |${cs}|) cannot return to the same control state!! This is forbidden to avoid possible infinite loops.`,
-            location: "processEvent"
-          })
         }
       }
       else return outputs;
