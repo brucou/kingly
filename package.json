@@ -1,7 +1,7 @@
 {
   "name": "kingly",
   "sideEffects": false,
-  "version": "0.28.8",
+  "version": "0.28.9",
   "description": "State machine library (Extended Hierarchical State Transducer)",
   "repository": {
     "type": "git",
@@ -35,7 +35,7 @@
     "contents": "dist"
   },
   "scripts": {
-    "prepublish": "npm run build",
+    "prepublishOnly": "npm run build",
     "test": "parcel test/parcel-index.html",
     "build_dev": "rollup --sourcemap -c rollup.config.js --environment BUILD:development",
     "build_prod": "rollup --sourcemap -c rollup.config.js --environment BUILD:production",
@@ -80,7 +80,9 @@
     "watchify": "^3.8.0"
   },
   "dependencies": {
-    "fp-rosetree": "^0.6.2"
+    "chess.js": "^0.11.0",
+    "fp-rosetree": "^0.6.2",
+    "react-state-driven": "^0.11.1"
   },
   "browserslist": [
     "> 1%",

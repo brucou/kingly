@@ -29,7 +29,12 @@ var createStateMachine = require("kingly").createStateMachine;
 // const actions = {
 //   "update clock": function (){},
 //   "cancel timer": function (){},
-//   "Move": function (){},
+//   "End game for whites": function (){},
+//   "Move white piece": function (){},
+//   "Highlight selected white piece": function (){},
+//   "End game for blacks": function (){},
+//   "Move black piece": function (){},
+//   "Highlight selected black piece": function (){},
 //   "restart timer": function (){},
 //   "Undo": function (){},
 //   "reset and start clock": function (){},
@@ -42,6 +47,11 @@ function contains(as, bs) {
 }
 
 function chain(arrFns, actions) {
+  if (arrFns.length === 0)
+    return function NO_ACTION() {
+      return { outputs: [], updates: [] };
+    };
+  if (arrFns.length === 1) return actions[arrFns[0]];
   return function chain_(s, ed, stg) {
     return arrFns.reduce(
       function (acc, fn) {
@@ -58,6 +68,11 @@ function chain(arrFns, actions) {
 }
 
 function every(arrFns, guards) {
+  if (arrFns.length === 0)
+    return function True() {
+      return true;
+    };
+  if (arrFns.length === 1) return guards[arrFns[0]];
   return function every_(s, ed, stg) {
     return arrFns.reduce(function (acc, fn) {
       var r = guards[fn](s, ed, stg);
@@ -69,12 +84,34 @@ function every(arrFns, guards) {
 
 var NO_OUTPUT = [];
 var NO_STATE_UPDATE = [];
-var events = ["clock ticked", "paused", "click", "resume", "Undo"];
-var states = undefined;
+var events = ["clock ticked", "clock clicked", "click", "Undo"];
+var states = {
+  "Game overღn0": "",
+  Initღn1: "",
+  "Game onღn2": {
+    "Black turnღn2::n0": { "Black playsღn2::n0::n0": "", "Piece selectedღn2::n0::n1": "" },
+    "White turnღn2::n1": { "White playsღn2::n1::n0": "", "Piece selectedღn2::n1::n1": "", "Initღn2::n1::n2": "" },
+    "Initღn2::n3": "",
+  },
+  "Updating clockღn3": "",
+  "Paused clockღn4": "",
+};
 function getKinglyTransitions(record) {
   var aF = record.actionFactories;
   var guards = record.guards;
-  var actionList = ["update clock", "cancel timer", "Move", "restart timer", "Undo", "reset and start clock"];
+  var actionList = [
+    "update clock",
+    "cancel timer",
+    "End game for whites",
+    "Move white piece",
+    "Highlight selected white piece",
+    "End game for blacks",
+    "Move black piece",
+    "Highlight selected black piece",
+    "restart timer",
+    "Undo",
+    "reset and start clock",
+  ];
   var predicateList = [
     "can move &amp;&amp; won",
     "can move &amp;&amp; !won",
@@ -115,63 +152,96 @@ function getKinglyTransitions(record) {
     throw new Error("Some guards are missing either in the graph, or in the guard implementation object!");
   }
   const transitions = [
-    { from: "n1ღInit", event: "", to: "n2ღGame on", action: chain([], aF) },
-    { from: "n2ღGame on", event: "clock ticked", to: "n3ღUpdating clock", action: chain(["update clock"], aF) },
-    { from: "n3ღUpdating clock", event: "", to: { deep: "n2ღGame on" }, action: chain([], aF) },
-    { from: "n2ღGame on", event: "paused", to: "n4ღPaused clock", action: chain(["cancel timer"], aF) },
+    { from: "nok", event: "init", to: "Game onღn2", action: chain([], aF) },
+    { from: "Game onღn2", event: "clock ticked", to: "Updating clockღn3", action: chain(["update clock"], aF) },
+    { from: "Updating clockღn3", event: "", to: { deep: "Game onღn2" }, action: chain([], aF) },
+    { from: "Game onღn2", event: "clock clicked", to: "Paused clockღn4", action: chain(["cancel timer"], aF) },
     {
-      from: "n2::n1::n1ღPiece selected",
+      from: "Piece selectedღn2::n1::n1",
       event: "click",
       guards: [
-        { predicate: every(["can move &amp;&amp; won"], guards), to: "n0ღGame over", action: chain([], aF) },
+        {
+          predicate: every(["can move &amp;&amp; won"], guards),
+          to: "Game overღn0",
+          action: chain(["End game for whites"], aF),
+        },
         {
           predicate: every(["can move &amp;&amp; !won"], guards),
-          to: "n2::n0::n0ღBlack plays",
-          action: chain(["Move"], aF),
+          to: "Black playsღn2::n0::n0",
+          action: chain(["Move white piece"], aF),
         },
-        { predicate: every(["white piece"], guards), to: "n2::n1::n1ღPiece selected", action: chain([], aF) },
+        {
+          predicate: every(["white piece"], guards),
+          to: "Piece selectedღn2::n1::n1",
+          action: chain(["Highlight selected white piece"], aF),
+        },
       ],
     },
     {
-      from: "n2::n0::n1ღPiece selected",
+      from: "Piece selectedღn2::n0::n1",
       event: "click",
       guards: [
-        { predicate: every(["can move &amp;&amp; won"], guards), to: "n0ღGame over", action: chain([], aF) },
+        {
+          predicate: every(["can move &amp;&amp; won"], guards),
+          to: "Game overღn0",
+          action: chain(["End game for blacks"], aF),
+        },
         {
           predicate: every(["can move &amp;&amp; !won"], guards),
-          to: "n2::n1::n0ღWhite plays",
-          action: chain(["Move"], aF),
+          to: "White playsღn2::n1::n0",
+          action: chain(["Move black piece"], aF),
         },
-        { predicate: every(["black piece"], guards), to: "n2::n0::n1ღPiece selected", action: chain([], aF) },
+        {
+          predicate: every(["black piece"], guards),
+          to: "Piece selectedღn2::n0::n1",
+          action: chain(["Highlight selected black piece"], aF),
+        },
       ],
     },
-    { from: "n4ღPaused clock", event: "resume", to: { deep: "n2ღGame on" }, action: chain(["restart timer"], aF) },
     {
-      from: "n2::n0ღBlack turn",
+      from: "Paused clockღn4",
+      event: "clock clicked",
+      to: { deep: "Game onღn2" },
+      action: chain(["restart timer"], aF),
+    },
+    {
+      from: "Black turnღn2::n0",
       event: "Undo",
       guards: [
-        { predicate: every(["&gt;0 moves"], guards), to: "n2::n1::n0ღWhite plays", action: chain(["Undo"], aF) },
+        { predicate: every(["&gt;0 moves"], guards), to: "White playsღn2::n1::n0", action: chain(["Undo"], aF) },
       ],
     },
     {
-      from: "n2::n1ღWhite turn",
+      from: "White turnღn2::n1",
       event: "Undo",
       guards: [
-        { predicate: every(["&gt;0 moves"], guards), to: "n2::n0::n0ღBlack plays", action: chain(["Undo"], aF) },
+        { predicate: every(["&gt;0 moves"], guards), to: "Black playsღn2::n0::n0", action: chain(["Undo"], aF) },
       ],
     },
-    { from: "n2::n3ღInit", event: "", to: "n2::n1ღWhite turn", action: chain(["reset and start clock"], aF) },
+    { from: "Game onღn2", event: "init", to: "White turnღn2::n1", action: chain(["reset and start clock"], aF) },
     {
-      from: "n2::n0::n0ღBlack plays",
+      from: "Black playsღn2::n0::n0",
       event: "click",
-      guards: [{ predicate: every(["black piece"], guards), to: "n2::n0::n1ღPiece selected", action: chain([], aF) }],
+      guards: [
+        {
+          predicate: every(["black piece"], guards),
+          to: "Piece selectedღn2::n0::n1",
+          action: chain(["Highlight selected black piece"], aF),
+        },
+      ],
     },
     {
-      from: "n2::n1::n0ღWhite plays",
+      from: "White playsღn2::n1::n0",
       event: "click",
-      guards: [{ predicate: every(["white piece"], guards), to: "n2::n1::n1ღPiece selected", action: chain([], aF) }],
+      guards: [
+        {
+          predicate: every(["white piece"], guards),
+          to: "Piece selectedღn2::n1::n1",
+          action: chain(["Highlight selected white piece"], aF),
+        },
+      ],
     },
-    { from: "n2::n1::n2ღInit", event: "", to: "n2::n1::n0ღWhite plays", action: chain([], aF) },
+    { from: "White turnღn2::n1", event: "init", to: "White playsღn2::n1::n0", action: chain([], aF) },
   ];
 
   return transitions;
