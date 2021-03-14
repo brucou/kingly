@@ -28,3 +28,4 @@ import "./online_visualizer_translation.specs"
 // appears enpty which is fairly misleading
 QUnit.dump.maxDepth = 50;
 
+// TODO: test also the function with state reset and then doc it on the website!!
