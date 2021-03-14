@@ -17,7 +17,8 @@
     "automaton",
     "automata"
   ],
-  "module": "src/index.js",
+  "source": "src/index.js",
+  "module": "dist/kingly.es.js",
   "main": "dist/kingly.umd.js",
   "unpkg": "dist/kingly.umd.js",
   "files": [
