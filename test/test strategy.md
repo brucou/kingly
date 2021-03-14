@@ -49,14 +49,15 @@
     - compound state x event x 1 predicate x atomic x action
     - compound state x init event x 0 predicate x compound state x action
     - compound state x init event x 0 predicate x atomic state x 0 action
-  - TMDB routing and movie querying v2.graphml
-    - eventless transitions x (atomic, compound) x >1 predicates
   - routing machine v2.graphml
     - shallow history state for compound state with several sub-compound states
     - shallow history state for compound state with no sub-compound states
     - those two cases implies different calculation for the shallow history so we increase test coverage again with this, but pick well the sequence of events!!! so H is confirmed different from H*
-    - compound x eventless
-    - eventless x history state
+    - eventless x compound x >1 predicates
+    - eventless x atomic x >1 predicates
+    - compound x eventless x >1 predicates
+    - eventless x history state x >1 predicates
+    - compound x event x history state x 0 predicates
   - ~~sparks application process with comeback proper syntax hierarchical fsm iter1.1.graphml~~
     - ~~nothing interesting actually, so dropped~~
   - we miss a few things like:
@@ -71,11 +72,9 @@
         - it is enough to check (>1, 1, 0) predicate once on any combination to have it work in every combination
           - and we did with compound state x >1 prdicate
         - .. in short we no longer pay attention to guards, guard ordering, and actions.
-        - we may however continue to pay attention to history states as the most tricky feature
-    - compound state x event x history state
-      - compound state x eventless x history state illegal
-      - compound state x init event x history state illegal (actually check that I have a contract on it)
- 
-  - In short, we only have the compound state x event x history state left to handle. We will make an ad-hoc case for it.
-  Or use the Harel CD player as an example! mm that would require implementing state modifications though. So don't. Just take inspiratio from it, e.g., the CD Loaded part simplified.
+    - we may however continue to **pay attention to history states** as the most tricky feature
+          - history state when no history for a compound state (default to init transition)
+          - history state (H x H*) where there is a history - nesting level 1
+          - history state (H x H*) where there is a history - nesting level 2
+          - we keep a dedicated file for testing these situations
  

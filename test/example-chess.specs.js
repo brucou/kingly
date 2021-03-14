@@ -39,21 +39,6 @@ const INITIAL_BLACK_PIECES_POS = [
   "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
 ];
 
-// State monikers
-const WHITE_TURN = "WHITE_TURN";
-const BLACK_TURN = "BLACK_TURN";
-const WHITE_PLAYS = "WHITE_PLAYS";
-const WHITE_PIECE_SELECTED = "WHITE_PIECE_SELECTED";
-const BLACK_PLAYS = "BLACK_PLAYS";
-const BLACK_PIECE_SELECTED = "BLACK_PIECE_SELECTED";
-const GAME_OVER = "GAME_OVER";
-const GAME_ON = "GAME_ON";
-const UPDATING_CLOCK = "UPDATING_CLOCK";
-const PAUSED_CLOCK = "PAUSED";
-// State the machine is in before the game starts
-// In a real app, the game would start for instance triggered by a url change
-const OFF = "OFF";
-
 // Event monikers
 const START = "START";
 const BOARD_CLICKED = "click";
@@ -455,6 +440,7 @@ QUnit.test("Chess game - short chess game ending in mate, including illegal move
   ];
 
   const outputs = shortChessGameWithWrongMoves.map(fsm);
+  // TODO: actually I forgot to test the timer... hence the history state...
   assert.deepEqual(outputs, [
     // click a3	none (empty square)
     [
@@ -471,47 +457,13 @@ QUnit.test("Chess game - short chess game ending in mate, including illegal move
           "commands": [],
           "eventData": "g2",
           "extendedState": {
-            "blackPiecesPos": [
-              "a7",
-              "b7",
-              "c7",
-              "d7",
-              "e7",
-              "f7",
-              "g7",
-              "h7",
-              "a8",
-              "b8",
-              "c8",
-              "d8",
-              "e8",
-              "f8",
-              "g8",
-              "h8"
-            ],
+            "blackPiecesPos": INITIAL_BLACK_PIECES_POS,
             "gameDuration": 0,
             "pieceSquare": "",
             "position": "start",
             "status": "",
             "turn": "w",
-            "whitePiecesPos": [
-              "a1",
-              "b1",
-              "c1",
-              "d1",
-              "e1",
-              "f1",
-              "g1",
-              "h1",
-              "a2",
-              "b2",
-              "c2",
-              "d2",
-              "e2",
-              "f2",
-              "g2",
-              "h2"
-            ]
+            "whitePiecesPos": INITIAL_WHITE_PIECES_POS
           },
           "settings": [
             "debug",
@@ -540,47 +492,13 @@ QUnit.test("Chess game - short chess game ending in mate, including illegal move
           ],
           "eventData": "g4",
           "extendedState": {
-            "blackPiecesPos": [
-              "a7",
-              "b7",
-              "c7",
-              "d7",
-              "e7",
-              "f7",
-              "g7",
-              "h7",
-              "a8",
-              "b8",
-              "c8",
-              "d8",
-              "e8",
-              "f8",
-              "g8",
-              "h8"
-            ],
+            "blackPiecesPos": INITIAL_BLACK_PIECES_POS,
             "gameDuration": 0,
             "pieceSquare": "g2",
             "position": "start",
             "status": "",
             "turn": "w",
-            "whitePiecesPos": [
-              "a1",
-              "b1",
-              "c1",
-              "d1",
-              "e1",
-              "f1",
-              "g1",
-              "h1",
-              "a2",
-              "b2",
-              "c2",
-              "d2",
-              "e2",
-              "f2",
-              "g2",
-              "h2"
-            ]
+            "whitePiecesPos": INITIAL_WHITE_PIECES_POS
           },
           "settings": [
             "debug",

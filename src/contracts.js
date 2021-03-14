@@ -643,7 +643,7 @@ export const areEventsDeclared = {
 export const areStatesDeclared = {
   name: 'areStatesDeclared',
   shouldThrow: false,
-  predicate: (fsmDef, settings, { stateEventTransitionsMaps, targetStatesMap, statesType }) => {
+  predicate: (fsmDef, settings, { stateEventTransitionsMaps, targetStatesMap, statesType, ancestorMap }) => {
     const originStateList = Object.keys(stateEventTransitionsMaps);
     const targetStateList = Array.from(targetStatesMap.keys()).filter(x => typeof x !== 'object');
     const stateList = Object.keys([originStateList, targetStateList].reduce((acc, stateList) => {
@@ -653,7 +653,11 @@ export const areStatesDeclared = {
     const declaredStateList = Object.keys(statesType);
     const statesDeclaredButNotTriggeringTransitions = declaredStateList
       .map(declaredState => stateList.indexOf(declaredState) === -1 && declaredState)
-      .filter(Boolean);
+      .filter(Boolean)
+      // Also removing compound states, they are allowed to not have transitions to or from them
+      // e.g., they are allowed for grouping clarity, not only for semantics
+      .filter(declaredState => !ancestorMap[declaredState] || ancestorMap[declaredState].length === 0)
+    ;
     const statesNotDeclaredButTriggeringTransitions = stateList
       .map(stateInTransition =>
         stateInTransition !== INIT_STATE && declaredStateList.indexOf(stateInTransition) === -1 && stateInTransition)

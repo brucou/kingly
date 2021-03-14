@@ -14,6 +14,7 @@
  * - miscellaneous auxiliary functions
  */
 // import './example-chess.specs'
+import './example-routing.specs'
 // import './no-hierarchy.specs'
 // import './no-hierarchy-pure.specs'
 // import './no-hierarchy-with-init-control-state-specs'
