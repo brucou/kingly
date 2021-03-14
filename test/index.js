@@ -1,30 +1,30 @@
-/**
- * Tests include:
- * - APIs
- * TODO: update after updating tests with the 4 identified main test cases. Cf. test strategy
- * keep a link to the strategy.md well visible
- * keep issue 5
- *   The test strategy consists of testing separately simple and complex machines; and
- *   stateful and pure APIs, e.g. covering the space (simple, complex) x (stateful, pure):
- *   - flat machines, i.e. machine without compound states
- *   - machines with hierarchy and advanced features (e.g., history)
- * - conversion to plantUML
- * - visualizer
- * - regression tests linked to solved issues
- * - miscellaneous auxiliary functions
- */
-// import './example-chess.specs'
+// Core API testing
+// cf. test/test strategy.md
+import './example-chess.specs'
 import './example-routing.specs'
-// import './no-hierarchy.specs'
-// import './no-hierarchy-pure.specs'
-// import './no-hierarchy-with-init-control-state-specs'
-// import './hierarchy.specs'
-// import "./convert-to-plantuml.specs"
-// import "./online_visualizer_translation.specs"
-// import "./utils.specs"
-// import './contracts.specs'
-// import './errors-specs'
-// import './contracts.ad-hoc.specs'
-// import './issue-5.specs'
+
+// Legacy tests
+// It does not cost anything to leave them here
+// but if they need update for some reason, remove them
+import './no-hierarchy.specs'
+import './no-hierarchy-pure.specs'
+import './no-hierarchy-with-init-control-state-specs'
+import './hierarchy.specs'
+import './errors-specs'
+import './contracts.specs'
+import './contracts.ad-hoc.specs'
+
+// Regression test issued from reported bugs
+import './issue-5.specs'
+
+// Tests for intermediary functions (i.e. byproducts of the impl.)
+import "./utils.specs"
+
+// Other tests
+import "./convert-to-plantuml.specs"
+import "./online_visualizer_translation.specs"
+
+// This is to get deeper QUnit object dumps, else the actual/expected object diff.
+// appears enpty which is fairly misleading
 QUnit.dump.maxDepth = 50;
 
