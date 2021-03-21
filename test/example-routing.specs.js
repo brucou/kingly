@@ -237,7 +237,6 @@ QUnit.test("Nested routing - miscellaneous route changes - testing history in se
   ];
 
   const outputs = allGoodRoutesSomeBadRoutesAndBack.map(fsm);
-  // TODO: actually I forgot to test the timer... hence the history state...
   assert.deepEqual(outputs, [
     [
       {

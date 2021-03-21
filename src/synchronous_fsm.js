@@ -4,7 +4,6 @@ import {
   AUTO_EVENT, DEBUG_MSG,
   DEEP,
   ERROR_MSG,
-  history_symbol,
   INIT_EVENT, INIT_INPUT_MSG,
   INIT_STATE, INPUT_MSG, INTERNAL_INPUT_MSG, INTERNAL_OUTPUTS_MSG, MACHINE_CREATION_ERROR_MSG,
   OUTPUTS_MSG,
@@ -155,12 +154,10 @@ export function createPureStateMachine(fsmDef, settings) {
 export function createStateMachineAPIs(fsmDef, settings) {
   const {
     states: controlStates,
-    events,
-    // transitions ,
     initialExtendedState,
     updateState: userProvidedUpdateStateFn,
   } = fsmDef;
-  const { debug, devTool, displayName } = settings || {};
+  const { debug, devTool } = settings || {};
   const checkContracts = debug && debug.checkContracts || void 0;
   let console = debug && debug.console || emptyConsole;
   let tracer = devTool && devTool.tracer || emptyTracer;
@@ -324,7 +321,8 @@ export function createStateMachineAPIs(fsmDef, settings) {
               extendedState = wrappedUpdateState(extendedState_, updates);
 
               // ...and enter the next state (can be different from `to` if we have nesting state group)
-              const newControlState = enterNextState(to, updates, hashStates);
+              // @modifies cs
+              enterNextState(to, updates, hashStates);
               console.info("ENTERING NEXT STATE: ", cs);
               console.info("with extended state: ", extendedState);
 
@@ -395,8 +393,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
      * @description This function encapsulates the behavior of a state machine. The function receives the input to be
      *   processed by the machine, and outputs the results of the machine computation. In the general case, the machine
      *   computes an array of values. The array can be empty, and when not, it may contain null values. The machine may
-     *   also return null (in csae of an input that the machine is not configured to react to) instead of returning an
-     *   array.
+     *   also return null (in the case of an input that the machine is not configured to react to).
      * @param {*} input
      * @returns {FSM_Outputs|Error}
      * @throws if an error is produced that is not an error recognized by Kingly. This generally means an unexpected
@@ -450,7 +447,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
               machineState: { cs, es: extendedState, hs: history }
             }
           });
-          console.error(`yyield > unexpected error!`, e);
+          console.error(`withProtectedState > unexpected error!`, e);
           // We should only catch the errors we are responsible for!
           throw e
         }
@@ -476,6 +473,8 @@ export function createStateMachineAPIs(fsmDef, settings) {
         // Reinitialize the machine
         extendedState = initialExtendedState;
         history = initHistoryDataStructure(stateList);
+        // TODO: I thought I changed that to cs
+        // and maybe I don't need the next line anymore
         hashStates[INIT_STATE].current_state_name = INIT_STATE;
         start();
       }
@@ -493,6 +492,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
       // history in place => No risk of accidentally modifying the history
       // of another machine
       // TODO: We should however definitely clone `extendedState` How to modify the API?
+      // unless the updateState function is immutable??
       // Require a clone function in settings? with a default of JSON.stringify?
       // or we shift the responsibility on the API user to do the cloning?
       // Good: faster in the default case, simpler library too, no cloning when not needed
@@ -508,22 +508,6 @@ export function createStateMachineAPIs(fsmDef, settings) {
   //
 
   /**
-   *
-   * @param {function(...*): True | Error} contract
-   * @param {Array<*>} arrayParams
-   * @returns {undefined}
-   * @throws KinglyError in case of one or more failing contracts
-   */
-  function assertContract(contract, arrayParams) {
-    const hasFailed = assert(contract, arrayParams);
-    if (checkContracts && hasFailed) {
-      throwKinglyError(hasFailed)
-    }
-
-    return void 0
-  }
-
-  /**
    * @description process an input (aka event) according to the machine specifications.
    * @param {LabelledEvent} event_struct input to be processed by the machine
    * @param {Boolean} isInternalEvent should be true iff the event is sent by Kingly, not by the
@@ -534,7 +518,10 @@ export function createStateMachineAPIs(fsmDef, settings) {
    * @returns {FSM_Outputs|null}
    */
   function sendEvent(event_struct, isInternalEvent) {
-    assertContract(isEventStruct, [event_struct]);
+    const hasFailedContracts = assert(isEventStruct, [event_struct]);
+    if (checkContracts && hasFailedContracts) {
+      throwKinglyError(hasFailedContracts)
+    }
 
     const { eventName, eventData } = destructureEvent(event_struct);
 
@@ -832,7 +819,6 @@ export function makeHistoryStates(states) {
 
     return {
       [historyType]: controlState,
-      type: history_symbol
     }
   }
 }

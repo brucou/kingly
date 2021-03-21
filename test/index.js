@@ -12,7 +12,7 @@ import './no-hierarchy-with-init-control-state-specs'
 import './hierarchy.specs'
 import './errors-specs'
 import './contracts.specs'
-import './contracts.ad-hoc.specs'
+import './contracts-ad-hoc.specs'
 
 // Regression test issued from reported bugs
 import './issue-5.specs'
@@ -22,7 +22,7 @@ import "./utils.specs"
 
 // Other tests
 import "./convert-to-plantuml.specs"
-import "./online_visualizer_translation.specs"
+import "./online-visualizer-translation.specs"
 
 // This is to get deeper QUnit object dumps, else the actual/expected object diff.
 // appears enpty which is fairly misleading

@@ -44,7 +44,7 @@ const START = "START";
 const BOARD_CLICKED = "click";
 const UNDO = "UNDO";
 const UNDO_MOVE = "UNDO_MOVE";
-const TICK = "TICK";
+const TICK = "clock ticked";
 const CLOCK_CLICKED = "clock clicked";
 
 // Commands
@@ -93,14 +93,6 @@ function isLegalNonWinningMove(extendedState, eventData, settings) {
   return isLegalMove && !hasWon
 }
 
-function isLegalNonWinningWhiteMove(extendedState, eventData, settings) {
-  return isLegalNonWinningMove(extendedState, eventData, settings)
-}
-
-function isLegalNonWinningBlackMove(extendedState, eventData, settings) {
-  return isLegalNonWinningMove(extendedState, eventData, settings)
-}
-
 function isLegalWinningMove(extendedState, eventData, settings) {
   const { chessEngine } = settings;
   const { pieceSquare } = extendedState;
@@ -118,14 +110,6 @@ function isLegalWinningMove(extendedState, eventData, settings) {
   isLegalMove && chessEngine.undo();
 
   return isLegalMove && hasWon
-}
-
-function isLegalWinningWhiteMove(extendedState, eventData, settings) {
-  return isLegalWinningMove(extendedState, eventData, settings)
-}
-
-function isLegalWinningBlackMove(extendedState, eventData, settings) {
-  return isLegalWinningMove(extendedState, eventData, settings)
 }
 
 function isMoveHistoryNotEmpty(extendedState, eventData, settings) {
@@ -215,8 +199,6 @@ const guards = {
   "black piece": isBlackPieceClicked,
   "&gt;0 moves": isMoveHistoryNotEmpty,
 };
-// TODO: I need to put the commands run in the updates! with their params! and keep the updates the same. NO! add the
-// command with their params in the update. Last 4 functions to update!
 const actionFactories = {
   "update clock": function updateAndDisplayClock(extS, evD, stg) {
     const { gameDuration } = extS;
@@ -390,17 +372,19 @@ const initialExtendedState = {
 QUnit.module("Testing createStateMachine(fsmDef, settings) with examples", {});
 
 /**
- * Besides testing that actions are passed the right arguments, that the extended state updates are correctly peformed, and the machine semantics respected, this test provides examples of (cf. test strategy.md for the test space breakdown):
-   - compound initial control state
-   - atomic state x event x 1 predicate x atomic x action
-   - atomic state x event x 1 predicate x atomic x  no action
-   - atomic state x eventless x 0 predicate x deep history x  no action
-   - atomic state x event x 0 predicate x deep history x  action
-   - deep history here great because H is different from H*! so we can check that too
-   - compound state x event x 0 predicate x atomic x action
-   - compound state x event x 1 predicate x atomic x action
-   - compound state x init event x 0 predicate x compound state x action
-   - compound state x init event x 0 predicate x atomic state x 0 action
+ * Besides testing that actions are passed the right arguments, that the extended state updates are correctly peformed,
+ * and the machine semantics respected, this test provides examples of (cf. test strategy.md for the test space
+ * breakdown):
+ - compound initial control state
+ - atomic state x event x 1 predicate x atomic x action
+ - atomic state x event x 1 predicate x atomic x  no action
+ - atomic state x eventless x 0 predicate x deep history x  no action
+ - atomic state x event x 0 predicate x deep history x  action
+ - deep history here great because H is different from H*! so we can check that too
+ - compound state x event x 0 predicate x atomic x action
+ - compound state x event x 1 predicate x atomic x action
+ - compound state x init event x 0 predicate x compound state x action
+ - compound state x init event x 0 predicate x atomic state x 0 action
  */
 
 QUnit.test("Chess game - short chess game ending in mate, including illegal moves", function exec_test(assert) {
@@ -421,103 +405,668 @@ QUnit.test("Chess game - short chess game ending in mate, including illegal move
   // The test sequence can be found in this article::
   // https://www.infoq.com/articles/functional-ui-stream-based-approach/
   const shortChessGameWithWrongMoves = [
-    { [BOARD_CLICKED]: "a3" },
-    { [BOARD_CLICKED]: "a8" },
-    { [BOARD_CLICKED]: "g2" },
-    { [BOARD_CLICKED]: "g5" },
-    { [BOARD_CLICKED]: "g4" },
-    { [BOARD_CLICKED]: "e6" },
-    { [BOARD_CLICKED]: "e7" },
-    { [BOARD_CLICKED]: "e4" },
-    { [BOARD_CLICKED]: "e5" },
-    { [BOARD_CLICKED]: "f2" },
-    { [BOARD_CLICKED]: "f4" },
-    { [BOARD_CLICKED]: "d8" },
-    { [BOARD_CLICKED]: "h4" },
-    { [BOARD_CLICKED]: "a2" },
-    { [BOARD_CLICKED]: "h2" },
-    { [BOARD_CLICKED]: "e6" },
+    [{ [BOARD_CLICKED]: "a3" },
+      // click a3	none (empty square)
+      [
+        null
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "a8" },
+      // click a8	none (black piece)
+      [
+        null
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "g2" },
+      // click g2	highlight g2
+      [
+        {
+          "Highlight selected white piece (g2)": {
+            "commands": [],
+            "eventData": "g2",
+            "extendedState": {
+              "blackPiecesPos": INITIAL_BLACK_PIECES_POS,
+              "gameDuration": 0,
+              "pieceSquare": "",
+              "position": "start",
+              "status": "",
+              "turn": "w",
+              "whitePiecesPos": INITIAL_WHITE_PIECES_POS
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
+            ]
+          }
+        }
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "g5" },
+      // click g5	none (invalid move)
+      [
+        null
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "g4" },
+      // click g4	move piece g2-g4, render new position
+      [
+        {
+          "Move white piece": {
+            "commands": [
+              {
+                "command": "MOVE_PIECE",
+                "params": {
+                  "from": "g2",
+                  "to": "g4"
+                }
+              }
+            ],
+            "eventData": "g4",
+            "extendedState": {
+              "blackPiecesPos": INITIAL_BLACK_PIECES_POS,
+              "gameDuration": 0,
+              "pieceSquare": "g2",
+              "position": "start",
+              "status": "",
+              "turn": "w",
+              "whitePiecesPos": INITIAL_WHITE_PIECES_POS
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
+            ]
+          }
+        }
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "e6" },
+      // click e6	highlight e6
+      [
+        null
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "e7" },
+      // click e7	highlight e7
+      [
+        {
+          "Highlight selected black piece": {
+            "commands": [],
+            "eventData": "e7",
+            "extendedState": {
+              "blackPiecesPos": [
+                "a7",
+                "b7",
+                "c7",
+                "d7",
+                "e7",
+                "f7",
+                "g7",
+                "h7",
+                "a8",
+                "b8",
+                "c8",
+                "d8",
+                "e8",
+                "f8",
+                "g8",
+                "h8"
+              ],
+              "gameDuration": 0,
+              "pieceSquare": "",
+              "position": "rnbqkbnr/pppppppp/8/8/6P1/8/PPPPPP1P/RNBQKBNR b KQkq g3 0 1",
+              "squareStyles": "",
+              "status": "",
+              "turn": "b",
+              "whitePiecesPos": [
+                "a1",
+                "b1",
+                "c1",
+                "d1",
+                "e1",
+                "f1",
+                "g1",
+                "h1",
+                "a2",
+                "b2",
+                "c2",
+                "d2",
+                "e2",
+                "f2",
+                "h2",
+                "g4"
+              ]
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
+            ]
+          }
+        }
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "e4" },
+      // click e4	none (invalid move)
+      [
+        null
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "e5" },
+      // click e5	move piece e7-e5, render new position
+      [
+        {
+          "Move black piece": {
+            "commands": [
+              {
+                "command": "MOVE_PIECE",
+                "params": {
+                  "from": "e7",
+                  "to": "e5"
+                }
+              }
+            ],
+            "eventData": "e5",
+            "extendedState": {
+              "blackPiecesPos": [
+                "a7",
+                "b7",
+                "c7",
+                "d7",
+                "e7",
+                "f7",
+                "g7",
+                "h7",
+                "a8",
+                "b8",
+                "c8",
+                "d8",
+                "e8",
+                "f8",
+                "g8",
+                "h8"
+              ],
+              "gameDuration": 0,
+              "pieceSquare": "e7",
+              "position": "rnbqkbnr/pppppppp/8/8/6P1/8/PPPPPP1P/RNBQKBNR b KQkq g3 0 1",
+              "squareStyles": "",
+              "status": "",
+              "turn": "b",
+              "whitePiecesPos": [
+                "a1",
+                "b1",
+                "c1",
+                "d1",
+                "e1",
+                "f1",
+                "g1",
+                "h1",
+                "a2",
+                "b2",
+                "c2",
+                "d2",
+                "e2",
+                "f2",
+                "h2",
+                "g4"
+              ]
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
+            ]
+          }
+        }
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "f2" },
+      // click f2	highlight f2
+      [
+        {
+          "Highlight selected white piece (f2)": {
+            "commands": [],
+            "eventData": "f2",
+            "extendedState": {
+              "blackPiecesPos": [
+                "a7",
+                "b7",
+                "c7",
+                "d7",
+                "f7",
+                "g7",
+                "h7",
+                "a8",
+                "b8",
+                "c8",
+                "d8",
+                "e8",
+                "f8",
+                "g8",
+                "h8",
+                "e5"
+              ],
+              "gameDuration": 0,
+              "pieceSquare": "",
+              "position": "rnbqkbnr/pppp1ppp/8/4p3/6P1/8/PPPPPP1P/RNBQKBNR w KQkq e6 0 2",
+              "squareStyles": "",
+              "status": "",
+              "turn": "w",
+              "whitePiecesPos": [
+                "a1",
+                "b1",
+                "c1",
+                "d1",
+                "e1",
+                "f1",
+                "g1",
+                "h1",
+                "a2",
+                "b2",
+                "c2",
+                "d2",
+                "e2",
+                "f2",
+                "h2",
+                "g4"
+              ]
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
+            ]
+          }
+        }
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "f4" },
+      // click f4	move piece f2-f4, render new position
+      [
+        {
+          "Move white piece": {
+            "commands": [
+              {
+                "command": "MOVE_PIECE",
+                "params": {
+                  "from": "f2",
+                  "to": "f4"
+                }
+              }
+            ],
+            "eventData": "f4",
+            "extendedState": {
+              "blackPiecesPos": [
+                "a7",
+                "b7",
+                "c7",
+                "d7",
+                "f7",
+                "g7",
+                "h7",
+                "a8",
+                "b8",
+                "c8",
+                "d8",
+                "e8",
+                "f8",
+                "g8",
+                "h8",
+                "e5"
+              ],
+              "gameDuration": 0,
+              "pieceSquare": "f2",
+              "position": "rnbqkbnr/pppp1ppp/8/4p3/6P1/8/PPPPPP1P/RNBQKBNR w KQkq e6 0 2",
+              "squareStyles": "",
+              "status": "",
+              "turn": "w",
+              "whitePiecesPos": [
+                "a1",
+                "b1",
+                "c1",
+                "d1",
+                "e1",
+                "f1",
+                "g1",
+                "h1",
+                "a2",
+                "b2",
+                "c2",
+                "d2",
+                "e2",
+                "f2",
+                "h2",
+                "g4"
+              ]
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
+            ]
+          }
+        }
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "d8" },
+      // click d8	highlight f2
+      [
+        {
+          "Highlight selected black piece": {
+            "commands": [],
+            "eventData": "d8",
+            "extendedState": {
+              "blackPiecesPos": [
+                "a7",
+                "b7",
+                "c7",
+                "d7",
+                "f7",
+                "g7",
+                "h7",
+                "a8",
+                "b8",
+                "c8",
+                "d8",
+                "e8",
+                "f8",
+                "g8",
+                "h8",
+                "e5"
+              ],
+              "gameDuration": 0,
+              "pieceSquare": "",
+              "position": "rnbqkbnr/pppp1ppp/8/4p3/5PP1/8/PPPPP2P/RNBQKBNR b KQkq f3 0 2",
+              "squareStyles": "",
+              "status": "",
+              "turn": "b",
+              "whitePiecesPos": [
+                "a1",
+                "b1",
+                "c1",
+                "d1",
+                "e1",
+                "f1",
+                "g1",
+                "h1",
+                "a2",
+                "b2",
+                "c2",
+                "d2",
+                "e2",
+                "h2",
+                "g4",
+                "f4"
+              ]
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
+            ]
+          }
+        }
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "h4" },
+      // click h4	move piece d8-h4, render new position
+      [
+        {
+          "Move black piece": {
+            "commands": [
+              {
+                "command": "MOVE_PIECE",
+                "params": {
+                  "from": "d8",
+                  "to": "h4"
+                }
+              }
+            ],
+            "eventData": "h4",
+            "extendedState": {
+              "blackPiecesPos": [
+                "a7",
+                "b7",
+                "c7",
+                "d7",
+                "f7",
+                "g7",
+                "h7",
+                "a8",
+                "b8",
+                "c8",
+                "d8",
+                "e8",
+                "f8",
+                "g8",
+                "h8",
+                "e5"
+              ],
+              "gameDuration": 0,
+              "pieceSquare": "d8",
+              "position": "rnbqkbnr/pppp1ppp/8/4p3/5PP1/8/PPPPP2P/RNBQKBNR b KQkq f3 0 2",
+              "squareStyles": "",
+              "status": "",
+              "turn": "b",
+              "whitePiecesPos": [
+                "a1",
+                "b1",
+                "c1",
+                "d1",
+                "e1",
+                "f1",
+                "g1",
+                "h1",
+                "a2",
+                "b2",
+                "c2",
+                "d2",
+                "e2",
+                "h2",
+                "g4",
+                "f4"
+              ]
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
+            ]
+          },
+          "status": "Black wins!"
+        }
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "a2" },
+      // click a2	none (game is over)
+      null,
+    ],
+    [{ [BOARD_CLICKED]: "h2" },
+      // click h2	none (game is over)
+      null,
+    ],
+    [{ [BOARD_CLICKED]: "e6" },
+      // click e6	none (game is over)
+      null
+    ],
   ];
 
-  const outputs = shortChessGameWithWrongMoves.map(fsm);
+  const outputs = shortChessGameWithWrongMoves
+    .map(inputOutputMap => inputOutputMap[0])
+    .map(fsm);
+  const expectedOutputs = shortChessGameWithWrongMoves
+    .map(inputOutputMap => inputOutputMap[1]);
   // TODO: actually I forgot to test the timer... hence the history state...
-  assert.deepEqual(outputs, [
-    // click a3	none (empty square)
-    [
-      null
-    ],
-    // click a8	none (black piece)
-    [
-      null
-    ],
-    // click g2	highlight g2
-    [
+  assert.deepEqual(outputs, expectedOutputs, `This short chess game is successfully concluded with a checkmate.`)
+});
+
+QUnit.test("Chess game - testing clock and deep history state", function exec_test(assert) {
+  const chessEngine = new Chess();
+  const settings = {
+    debug: { console, checkContracts: null },   // Injecting necessary dependencies
+    eventEmitter: { next: () => {} },
+    chessEngine
+  }
+
+  const fsm = createStateMachineFromGraph({
+    updateState,
+    initialExtendedState,
+    actionFactories,
+    guards
+  }, settings);
+
+  // The test sequence can be found in this article::
+  // https://www.infoq.com/articles/functional-ui-stream-based-approach/
+  const shortChessGameWithWrongMoves = [
+    [{ [CLOCK_CLICKED]: void 0 }, [
+      // Cancels the clcok timer and suspends the game
       {
-        "Highlight selected white piece (g2)": {
-          "commands": [],
-          "eventData": "g2",
-          "extendedState": {
-            "blackPiecesPos": INITIAL_BLACK_PIECES_POS,
-            "gameDuration": 0,
-            "pieceSquare": "",
-            "position": "start",
-            "status": "",
-            "turn": "w",
-            "whitePiecesPos": INITIAL_WHITE_PIECES_POS
-          },
-          "settings": [
-            "debug",
-            "eventEmitter",
-            "chessEngine"
-          ]
-        }
+      "cancel timer": {
+        "commands": [
+          {
+            "command": CANCEL_TIMER,
+            "params": void 0
+          }
+        ],
+        "eventData": void 0,
+        "extendedState": initialExtendedState,
+        "settings": ["debug", "eventEmitter", "chessEngine"]
       }
-    ],
-    // click g5	none (invalid move)
-    [
+    }
+    ]],
+    [{ [TICK]: void 0 },
+      // No event handler for the TICK event when the clock (game) is paused
       null
     ],
-    // click g4	move piece g2-g4, render new position
-    [
+    [{ [BOARD_CLICKED]: "g2" },
+      // nothing happens - the game is suspended
+      null],
+    [{ [CLOCK_CLICKED]: void 0 }, [
+      // Resumes the clock timer and the game
       {
-        "Move white piece": {
+        "restart timer": {
           "commands": [
             {
-              "command": "MOVE_PIECE",
-              "params": {
-                "from": "g2",
-                "to": "g4"
-              }
+              "command": SET_TIMER,
+              "params": 1000
             }
           ],
-          "eventData": "g4",
-          "extendedState": {
-            "blackPiecesPos": INITIAL_BLACK_PIECES_POS,
-            "gameDuration": 0,
-            "pieceSquare": "g2",
-            "position": "start",
-            "status": "",
-            "turn": "w",
-            "whitePiecesPos": INITIAL_WHITE_PIECES_POS
-          },
-          "settings": [
-            "debug",
-            "eventEmitter",
-            "chessEngine"
-          ]
+          "eventData": void 0,
+          "extendedState": initialExtendedState,
+          "settings": ["debug", "eventEmitter", "chessEngine"]
         }
       }
+    ]],
+    [{ [BOARD_CLICKED]: "a3" },
+      // click a3	none (empty square)
+      [
+        null
+      ],
     ],
-    // click e6	highlight e6
-    [
-      null
-    ],
-    // click e7	highlight e7
-    [
+    [{ [TICK]: void 0 },[
+      // Resumes the clock timer and the game
       {
-        "Highlight selected black piece": {
-          "commands": [],
-          "eventData": "e7",
+        "update clock": {
+          "commands": [
+            {
+              "command": SET_TIMER,
+              "params": 1000
+            }
+          ],
+          "eventData": void 0,
+          "extendedState": initialExtendedState,
+          "settings": ["debug", "eventEmitter", "chessEngine"]
+        }
+      }
+    ]],
+    [{ [BOARD_CLICKED]: "a8" },
+      // click a8	none (black piece)
+      [
+        null
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "g2" },
+      // click g2	highlight g2
+      [
+        {
+          "Highlight selected white piece (g2)": {
+            "commands": [],
+            "eventData": "g2",
+            "extendedState": {
+              "blackPiecesPos": INITIAL_BLACK_PIECES_POS,
+              "gameDuration": 1,
+              "pieceSquare": "",
+              "position": "start",
+              "status": "",
+              "turn": "w",
+              "whitePiecesPos": INITIAL_WHITE_PIECES_POS
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
+            ]
+          }
+        }
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "g5" },
+      // click g5	none (invalid move)
+      [
+        null
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "g4" },
+      // click g4	move piece g2-g4, render new position
+      [
+        {
+          "Move white piece": {
+            "commands": [
+              {
+                "command": "MOVE_PIECE",
+                "params": {
+                  "from": "g2",
+                  "to": "g4"
+                }
+              }
+            ],
+            "eventData": "g4",
+            "extendedState": {
+              "blackPiecesPos": INITIAL_BLACK_PIECES_POS,
+              "gameDuration": 1,
+              "pieceSquare": "g2",
+              "position": "start",
+              "status": "",
+              "turn": "w",
+              "whitePiecesPos": INITIAL_WHITE_PIECES_POS
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
+            ]
+          }
+        }
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "e6" },
+      // click e6	highlight e6
+      [
+        null
+      ],
+    ],
+    [{ [TICK]: void 0 },[
+      // Resumes the clock timer and the game
+      {
+        "update clock": {
+          "commands": [
+            {
+              "command": SET_TIMER,
+              "params": 1000
+            }
+          ],
+          "eventData": void 0,
           "extendedState": {
             "blackPiecesPos": [
               "a7",
@@ -537,7 +1086,7 @@ QUnit.test("Chess game - short chess game ending in mate, including illegal move
               "g8",
               "h8"
             ],
-            "gameDuration": 0,
+            "gameDuration": 1,
             "pieceSquare": "",
             "position": "rnbqkbnr/pppppppp/8/8/6P1/8/PPPPPP1P/RNBQKBNR b KQkq g3 0 1",
             "squareStyles": "",
@@ -562,32 +1111,81 @@ QUnit.test("Chess game - short chess game ending in mate, including illegal move
               "g4"
             ]
           },
-          "settings": [
-            "debug",
-            "eventEmitter",
-            "chessEngine"
-          ]
+          "settings": ["debug", "eventEmitter", "chessEngine"]
         }
       }
+    ]],
+    [{ [BOARD_CLICKED]: "e7" },
+      // click e7	highlight e7
+      [
+        {
+          "Highlight selected black piece": {
+            "commands": [],
+            "eventData": "e7",
+            "extendedState": {
+              "blackPiecesPos": [
+                "a7",
+                "b7",
+                "c7",
+                "d7",
+                "e7",
+                "f7",
+                "g7",
+                "h7",
+                "a8",
+                "b8",
+                "c8",
+                "d8",
+                "e8",
+                "f8",
+                "g8",
+                "h8"
+              ],
+              "gameDuration": 2,
+              "pieceSquare": "",
+              "position": "rnbqkbnr/pppppppp/8/8/6P1/8/PPPPPP1P/RNBQKBNR b KQkq g3 0 1",
+              "squareStyles": "",
+              "status": "",
+              "turn": "b",
+              "whitePiecesPos": [
+                "a1",
+                "b1",
+                "c1",
+                "d1",
+                "e1",
+                "f1",
+                "g1",
+                "h1",
+                "a2",
+                "b2",
+                "c2",
+                "d2",
+                "e2",
+                "f2",
+                "h2",
+                "g4"
+              ]
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
+            ]
+          }
+        }
+      ],
     ],
-    // click e4	none (invalid move)
-    [
-      null
-    ],
-    // click e5	move piece e7-e5, render new position
-    [
+    [{ [CLOCK_CLICKED]: void 0 }, [
+      // Cancels the clcok timer and suspends the game
       {
-        "Move black piece": {
+        "cancel timer": {
           "commands": [
             {
-              "command": "MOVE_PIECE",
-              "params": {
-                "from": "e7",
-                "to": "e5"
-              }
+              "command": CANCEL_TIMER,
+              "params": void 0
             }
           ],
-          "eventData": "e5",
+          "eventData": void 0,
           "extendedState": {
             "blackPiecesPos": [
               "a7",
@@ -607,7 +1205,7 @@ QUnit.test("Chess game - short chess game ending in mate, including illegal move
               "g8",
               "h8"
             ],
-            "gameDuration": 0,
+            "gameDuration": 2,
             "pieceSquare": "e7",
             "position": "rnbqkbnr/pppppppp/8/8/6P1/8/PPPPPP1P/RNBQKBNR b KQkq g3 0 1",
             "squareStyles": "",
@@ -632,26 +1230,28 @@ QUnit.test("Chess game - short chess game ending in mate, including illegal move
               "g4"
             ]
           },
-          "settings": [
-            "debug",
-            "eventEmitter",
-            "chessEngine"
-          ]
+          "settings": ["debug", "eventEmitter", "chessEngine"]
         }
       }
-    ],
-    // click f2	highlight f2
-    [
+    ]],
+    [{ [CLOCK_CLICKED]: void 0 }, [
+      // Resumes the clock timer and resumes the game
       {
-        "Highlight selected white piece (f2)": {
-          "commands": [],
-          "eventData": "f2",
+        "restart timer": {
+          "commands": [
+            {
+              "command": SET_TIMER,
+              "params": 1000
+            }
+          ],
+          "eventData": void 0,
           "extendedState": {
             "blackPiecesPos": [
               "a7",
               "b7",
               "c7",
               "d7",
+              "e7",
               "f7",
               "g7",
               "h7",
@@ -662,15 +1262,14 @@ QUnit.test("Chess game - short chess game ending in mate, including illegal move
               "e8",
               "f8",
               "g8",
-              "h8",
-              "e5"
+              "h8"
             ],
-            "gameDuration": 0,
-            "pieceSquare": "",
-            "position": "rnbqkbnr/pppp1ppp/8/4p3/6P1/8/PPPPPP1P/RNBQKBNR w KQkq e6 0 2",
+            "gameDuration": 2,
+            "pieceSquare": "e7",
+            "position": "rnbqkbnr/pppppppp/8/8/6P1/8/PPPPPP1P/RNBQKBNR b KQkq g3 0 1",
             "squareStyles": "",
             "status": "",
-            "turn": "w",
+            "turn": "b",
             "whitePiecesPos": [
               "a1",
               "b1",
@@ -690,210 +1289,365 @@ QUnit.test("Chess game - short chess game ending in mate, including illegal move
               "g4"
             ]
           },
-          "settings": [
-            "debug",
-            "eventEmitter",
-            "chessEngine"
-          ]
+          "settings": ["debug", "eventEmitter", "chessEngine"]
         }
       }
+    ]],
+    [{ [BOARD_CLICKED]: "e4" },
+      // click e4	none (invalid move)
+      [
+        null
+      ],
     ],
-    // click f4	move piece f2-f4, render new position
-    [
-      {
-        "Move white piece": {
-          "commands": [
-            {
-              "command": "MOVE_PIECE",
-              "params": {
-                "from": "f2",
-                "to": "f4"
+    [{ [BOARD_CLICKED]: "e5" },
+      // click e5	move piece e7-e5, render new position
+      [
+        {
+          "Move black piece": {
+            "commands": [
+              {
+                "command": "MOVE_PIECE",
+                "params": {
+                  "from": "e7",
+                  "to": "e5"
+                }
               }
-            }
-          ],
-          "eventData": "f4",
-          "extendedState": {
-            "blackPiecesPos": [
-              "a7",
-              "b7",
-              "c7",
-              "d7",
-              "f7",
-              "g7",
-              "h7",
-              "a8",
-              "b8",
-              "c8",
-              "d8",
-              "e8",
-              "f8",
-              "g8",
-              "h8",
-              "e5"
             ],
-            "gameDuration": 0,
-            "pieceSquare": "f2",
-            "position": "rnbqkbnr/pppp1ppp/8/4p3/6P1/8/PPPPPP1P/RNBQKBNR w KQkq e6 0 2",
-            "squareStyles": "",
-            "status": "",
-            "turn": "w",
-            "whitePiecesPos": [
-              "a1",
-              "b1",
-              "c1",
-              "d1",
-              "e1",
-              "f1",
-              "g1",
-              "h1",
-              "a2",
-              "b2",
-              "c2",
-              "d2",
-              "e2",
-              "f2",
-              "h2",
-              "g4"
+            "eventData": "e5",
+            "extendedState": {
+              "blackPiecesPos": [
+                "a7",
+                "b7",
+                "c7",
+                "d7",
+                "e7",
+                "f7",
+                "g7",
+                "h7",
+                "a8",
+                "b8",
+                "c8",
+                "d8",
+                "e8",
+                "f8",
+                "g8",
+                "h8"
+              ],
+              "gameDuration": 2,
+              "pieceSquare": "e7",
+              "position": "rnbqkbnr/pppppppp/8/8/6P1/8/PPPPPP1P/RNBQKBNR b KQkq g3 0 1",
+              "squareStyles": "",
+              "status": "",
+              "turn": "b",
+              "whitePiecesPos": [
+                "a1",
+                "b1",
+                "c1",
+                "d1",
+                "e1",
+                "f1",
+                "g1",
+                "h1",
+                "a2",
+                "b2",
+                "c2",
+                "d2",
+                "e2",
+                "f2",
+                "h2",
+                "g4"
+              ]
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
             ]
-          },
-          "settings": [
-            "debug",
-            "eventEmitter",
-            "chessEngine"
-          ]
+          }
         }
-      }
+      ],
     ],
-    // click d8	highlight f2
-    [
-      {
-        "Highlight selected black piece": {
-          "commands": [],
-          "eventData": "d8",
-          "extendedState": {
-            "blackPiecesPos": [
-              "a7",
-              "b7",
-              "c7",
-              "d7",
-              "f7",
-              "g7",
-              "h7",
-              "a8",
-              "b8",
-              "c8",
-              "d8",
-              "e8",
-              "f8",
-              "g8",
-              "h8",
-              "e5"
-            ],
-            "gameDuration": 0,
-            "pieceSquare": "",
-            "position": "rnbqkbnr/pppp1ppp/8/4p3/5PP1/8/PPPPP2P/RNBQKBNR b KQkq f3 0 2",
-            "squareStyles": "",
-            "status": "",
-            "turn": "b",
-            "whitePiecesPos": [
-              "a1",
-              "b1",
-              "c1",
-              "d1",
-              "e1",
-              "f1",
-              "g1",
-              "h1",
-              "a2",
-              "b2",
-              "c2",
-              "d2",
-              "e2",
-              "h2",
-              "g4",
-              "f4"
+    [{ [BOARD_CLICKED]: "f2" },
+      // click f2	highlight f2
+      [
+        {
+          "Highlight selected white piece (f2)": {
+            "commands": [],
+            "eventData": "f2",
+            "extendedState": {
+              "blackPiecesPos": [
+                "a7",
+                "b7",
+                "c7",
+                "d7",
+                "f7",
+                "g7",
+                "h7",
+                "a8",
+                "b8",
+                "c8",
+                "d8",
+                "e8",
+                "f8",
+                "g8",
+                "h8",
+                "e5"
+              ],
+              "gameDuration": 2,
+              "pieceSquare": "",
+              "position": "rnbqkbnr/pppp1ppp/8/4p3/6P1/8/PPPPPP1P/RNBQKBNR w KQkq e6 0 2",
+              "squareStyles": "",
+              "status": "",
+              "turn": "w",
+              "whitePiecesPos": [
+                "a1",
+                "b1",
+                "c1",
+                "d1",
+                "e1",
+                "f1",
+                "g1",
+                "h1",
+                "a2",
+                "b2",
+                "c2",
+                "d2",
+                "e2",
+                "f2",
+                "h2",
+                "g4"
+              ]
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
             ]
-          },
-          "settings": [
-            "debug",
-            "eventEmitter",
-            "chessEngine"
-          ]
+          }
         }
-      }
+      ],
     ],
-    // click h4	move piece d8-h4, render new position
-    [
-      {
-        "Move black piece": {
-          "commands": [
-            {
-              "command": "MOVE_PIECE",
-              "params": {
-                "from": "d8",
-                "to": "h4"
+    [{ [BOARD_CLICKED]: "f4" },
+      // click f4	move piece f2-f4, render new position
+      [
+        {
+          "Move white piece": {
+            "commands": [
+              {
+                "command": "MOVE_PIECE",
+                "params": {
+                  "from": "f2",
+                  "to": "f4"
+                }
               }
-            }
-          ],
-          "eventData": "h4",
-          "extendedState": {
-            "blackPiecesPos": [
-              "a7",
-              "b7",
-              "c7",
-              "d7",
-              "f7",
-              "g7",
-              "h7",
-              "a8",
-              "b8",
-              "c8",
-              "d8",
-              "e8",
-              "f8",
-              "g8",
-              "h8",
-              "e5"
             ],
-            "gameDuration": 0,
-            "pieceSquare": "d8",
-            "position": "rnbqkbnr/pppp1ppp/8/4p3/5PP1/8/PPPPP2P/RNBQKBNR b KQkq f3 0 2",
-            "squareStyles": "",
-            "status": "",
-            "turn": "b",
-            "whitePiecesPos": [
-              "a1",
-              "b1",
-              "c1",
-              "d1",
-              "e1",
-              "f1",
-              "g1",
-              "h1",
-              "a2",
-              "b2",
-              "c2",
-              "d2",
-              "e2",
-              "h2",
-              "g4",
-              "f4"
+            "eventData": "f4",
+            "extendedState": {
+              "blackPiecesPos": [
+                "a7",
+                "b7",
+                "c7",
+                "d7",
+                "f7",
+                "g7",
+                "h7",
+                "a8",
+                "b8",
+                "c8",
+                "d8",
+                "e8",
+                "f8",
+                "g8",
+                "h8",
+                "e5"
+              ],
+              "gameDuration": 2,
+              "pieceSquare": "f2",
+              "position": "rnbqkbnr/pppp1ppp/8/4p3/6P1/8/PPPPPP1P/RNBQKBNR w KQkq e6 0 2",
+              "squareStyles": "",
+              "status": "",
+              "turn": "w",
+              "whitePiecesPos": [
+                "a1",
+                "b1",
+                "c1",
+                "d1",
+                "e1",
+                "f1",
+                "g1",
+                "h1",
+                "a2",
+                "b2",
+                "c2",
+                "d2",
+                "e2",
+                "f2",
+                "h2",
+                "g4"
+              ]
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
+            ]
+          }
+        }
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "d8" },
+      // click d8	highlight f2
+      [
+        {
+          "Highlight selected black piece": {
+            "commands": [],
+            "eventData": "d8",
+            "extendedState": {
+              "blackPiecesPos": [
+                "a7",
+                "b7",
+                "c7",
+                "d7",
+                "f7",
+                "g7",
+                "h7",
+                "a8",
+                "b8",
+                "c8",
+                "d8",
+                "e8",
+                "f8",
+                "g8",
+                "h8",
+                "e5"
+              ],
+              "gameDuration": 2,
+              "pieceSquare": "",
+              "position": "rnbqkbnr/pppp1ppp/8/4p3/5PP1/8/PPPPP2P/RNBQKBNR b KQkq f3 0 2",
+              "squareStyles": "",
+              "status": "",
+              "turn": "b",
+              "whitePiecesPos": [
+                "a1",
+                "b1",
+                "c1",
+                "d1",
+                "e1",
+                "f1",
+                "g1",
+                "h1",
+                "a2",
+                "b2",
+                "c2",
+                "d2",
+                "e2",
+                "h2",
+                "g4",
+                "f4"
+              ]
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
+            ]
+          }
+        }
+      ],
+    ],
+    [{ [BOARD_CLICKED]: "h4" },
+      // click h4	move piece d8-h4, render new position
+      [
+        {
+          "Move black piece": {
+            "commands": [
+              {
+                "command": "MOVE_PIECE",
+                "params": {
+                  "from": "d8",
+                  "to": "h4"
+                }
+              }
+            ],
+            "eventData": "h4",
+            "extendedState": {
+              "blackPiecesPos": [
+                "a7",
+                "b7",
+                "c7",
+                "d7",
+                "f7",
+                "g7",
+                "h7",
+                "a8",
+                "b8",
+                "c8",
+                "d8",
+                "e8",
+                "f8",
+                "g8",
+                "h8",
+                "e5"
+              ],
+              "gameDuration": 2,
+              "pieceSquare": "d8",
+              "position": "rnbqkbnr/pppp1ppp/8/4p3/5PP1/8/PPPPP2P/RNBQKBNR b KQkq f3 0 2",
+              "squareStyles": "",
+              "status": "",
+              "turn": "b",
+              "whitePiecesPos": [
+                "a1",
+                "b1",
+                "c1",
+                "d1",
+                "e1",
+                "f1",
+                "g1",
+                "h1",
+                "a2",
+                "b2",
+                "c2",
+                "d2",
+                "e2",
+                "h2",
+                "g4",
+                "f4"
+              ]
+            },
+            "settings": [
+              "debug",
+              "eventEmitter",
+              "chessEngine"
             ]
           },
-          "settings": [
-            "debug",
-            "eventEmitter",
-            "chessEngine"
-          ]
-        },
-        "status": "Black wins!"
-      }
+          "status": "Black wins!"
+        }
+      ],
     ],
-    // click a2	none (game is over)
-    null,
-    // click h2	none (game is over)
-    null,
-    // click e6	none (game is over)
-    null
-  ], `This short chess game is successfully concluded with a checkmate.`)
+    [{ [BOARD_CLICKED]: "a2" },
+      // click a2	none (game is over)
+      null,
+    ],
+    [{ [BOARD_CLICKED]: "h2" },
+      // click h2	none (game is over)
+      null,
+    ],
+    [{ [BOARD_CLICKED]: "e6" },
+      // click e6	none (game is over)
+      null
+    ],
+    [{ [CLOCK_CLICKED]: void 0 },
+      // game is over
+      null],
+    [{ [TICK]: void 0 },
+      // game is over
+      null]
+  ];
+
+  const outputs = shortChessGameWithWrongMoves
+    .map(inputOutputMap => inputOutputMap[0])
+    .map(fsm);
+  const expectedOutputs = shortChessGameWithWrongMoves
+    .map(inputOutputMap => inputOutputMap[1]);
+  assert.deepEqual(outputs, expectedOutputs, `This short chess game is successfully concluded with a checkmate.`)
 });
