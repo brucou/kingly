@@ -471,11 +471,9 @@ export function createStateMachineAPIs(fsmDef, settings) {
       }
       else if (fsmState === null) {
         // Reinitialize the machine
+        cs = INIT_STATE;
         extendedState = initialExtendedState;
         history = initHistoryDataStructure(stateList);
-        // TODO: I thought I changed that to cs
-        // and maybe I don't need the next line anymore
-        hashStates[INIT_STATE].current_state_name = INIT_STATE;
         start();
       }
       else {
@@ -491,13 +489,8 @@ export function createStateMachineAPIs(fsmDef, settings) {
       // NOTE: history does not need to be cloned here! We do not update the
       // history in place => No risk of accidentally modifying the history
       // of another machine
-      // TODO: We should however definitely clone `extendedState` How to modify the API?
-      // unless the updateState function is immutable??
-      // Require a clone function in settings? with a default of JSON.stringify?
-      // or we shift the responsibility on the API user to do the cloning?
-      // Good: faster in the default case, simpler library too, no cloning when not needed
-      // Bad: library user can forget, so footgun...
-      // ADR: API that forces to signal a clone function, which can be DEFAULT_CLONE
+      // DOC: updateState MUST NOT mutate the extended state! We can be somewhat loose with
+      // the stateful API but not when using the pure API!
       return { outputs, fsmState: { cs, hs: history, es: extendedState } }
     }
   };

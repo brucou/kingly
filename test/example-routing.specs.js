@@ -55,6 +55,7 @@ const guards = {
     return !!/^checkout\/?/.exec(URL)
   },
   "unknown url": function cannotTransition(extendedState, eventData, settings) {
+    const URL = eventData;
     return !(
       /^cart\/?/.exec(URL) ||
       /^about\/?/.exec(URL) ||
@@ -86,7 +87,6 @@ const guards = {
  * (such that updateState:: E -> U[] -> E)
  */
 const actionFactories = {
-  // TODO
   "update url": function updateURL(extendedState, eventData, settings) {
     return {
       outputs: makeTracedOutputs("update url", extendedState),
@@ -195,7 +195,6 @@ QUnit.module("Testing createStateMachine(fsmDef, settings) with examples", {});
  */
 
 QUnit.test("Nested routing - miscellaneous route changes - testing history in several nested levels", function exec_test(assert) {
-  // TODO
   const fsm = createStateMachineFromGraph({
     updateState,
     initialExtendedState,
@@ -450,6 +449,5 @@ QUnit.test("Nested routing - miscellaneous route changes - testing history in se
         }
       }
     ]
-  ], `dummy`)
-
+  ], `Routing machine correctly executed`)
 });

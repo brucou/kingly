@@ -89,7 +89,7 @@ const initialControlState = INIT;
 /**
  * @typedef {Object} ExtendedState
  * @property {Number} currentPage
- * @property {User} user
+ * @property {*} user
  * @property {Boolean} areTagsFetched
  * */
 const initialExtendedState = {
@@ -207,11 +207,6 @@ const transitions = [
     { from: "home", event: CLICKED_USER_FEED, to: "home", action: resetPage },
     { from: "home", event: ROUTE_CHANGED, to: "routing", action: ACTION_IDENTITY },
 ];
-
-// TODO: check official demo. Is the pagination reset when feed/page 2/feed ? YES
-// TODO: best practice. Factorize thr latest possible. pagination is good example
-// and then only factorize when great certainty that requirements will not change
-// as is the case when it is intrinsic property of the specs
 
 // State update
 // Basically {a, b: {c, d}}, [{b:{e}]} -> {a, b:{e}}

@@ -1,10 +1,11 @@
 # API testing
 
 - Test contracts separately
-
 - Test errors separately
   - user-provided functions throwing
   - library throwing
+- Test pure API separately
+  - with PBT (metamorphic testing actually) by comparing with results from the stateful API
  
 - Main test space (assuming valid machine x no errors/exceptions):
   - DISCARDED: ~~through incremental generation of machines~~

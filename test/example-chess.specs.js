@@ -897,7 +897,6 @@ QUnit.test("Chess game - short chess game ending in mate, including illegal move
     .map(fsm);
   const expectedOutputs = shortChessGameWithWrongMoves
     .map(inputOutputMap => inputOutputMap[1]);
-  // TODO: actually I forgot to test the timer... hence the history state...
   assert.deepEqual(outputs, expectedOutputs, `This short chess game is successfully concluded with a checkmate.`)
 });
 
