@@ -263,7 +263,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
 
             if (shouldTransitionBeTaken) {
               // CASE : guard for transition is fulfilled so we can execute the actions...
-              console.info("IN STATE ", from);
+              console.info("IN STATE ", wrap(from));
               if (guard.predicate) {
                 tracer({
                   type: DEBUG_MSG,
@@ -287,7 +287,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
                 console.info(`CASE: unguarded transition`);
               }
 
-              console.info("THEN : we execute the action " + actionName);
+              console.info("THEN: we execute the action " + actionName);
               const actionResult = ((extendedState, eventData, settings) => {
                 try {
                   return action(extendedState, eventData, settings);
@@ -323,7 +323,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
               // ...and enter the next state (can be different from `to` if we have nesting state group)
               // @modifies cs
               enterNextState(to, updates, hashStates);
-              console.info("ENTERING NEXT STATE: ", cs);
+              console.info("ENTER NEXT STATE: ", wrap(cs));
               console.info("with extended state: ", extendedState);
 
               // allows for chaining and stop chaining guard
@@ -649,7 +649,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
   function leaveState(from, extendedState, hash_states) {
     history = updateHistory(history, stateAncestors, hash_states[from].name);
 
-    console.info("left state", wrap(from));
+    console.info("LEAVE STATE", wrap(from));
   }
 
   function enterNextState(to, updatedExtendedState, hash_states) {
