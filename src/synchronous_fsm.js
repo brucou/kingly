@@ -690,7 +690,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
         machineState: { cs, es: extendedState, hs: history }
       }
     });
-    debug && console.info("AND TRANSITION TO STATE", targetStateName);
+    debug && console.info("AND TRANSITION TO STATE", wrap(targetStateName));
     return targetStateName;
   }
 
