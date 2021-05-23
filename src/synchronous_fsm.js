@@ -287,7 +287,7 @@ export function createStateMachineAPIs(fsmDef, settings) {
                 console.info(`CASE: unguarded transition`);
               }
 
-              console.info("THEN: we execute the action " + actionName);
+              console.info("THEN: we execute the action factory " + actionName);
               const actionResult = ((extendedState, eventData, settings) => {
                 try {
                   return action(extendedState, eventData, settings);

@@ -30,7 +30,7 @@
  * @property {Array<EventLabel>} events A list of event monikers the machine is configured to react to
  * @property {Array<Transition>} transitions An array of transitions the machine is allowed to take
  * @property {*} initialExtendedState The initial value for the machine's extended state
- * @property {function(ExtendedState, ExtendedStateUpdate) : ExtendedState} updateState function
+ * @property {function(ExtendedState, ExtendedStateUpdates) : ExtendedState} updateState function
  * which update the extended state of the state machine
  */
 /**
@@ -59,12 +59,12 @@
  * @typedef {function(ExtendedState, EventData, FSM_Settings) : Actions} ActionFactory
  */
 /**
- * @typedef {{updates: ExtendedStateUpdate, outputs: Array<MachineOutput>}} Actions The actions
+ * @typedef {{updates: ExtendedStateUpdates, outputs: Array<MachineOutput>}} Actions The actions
  * to be performed by the state machine in response to a transition. `updates` represents the state update for
  * the variables of the extended state machine. `output` represents the output of the state machine passed to the
  * API caller.
  */
-/** @typedef {function (ExtendedState, EventData) : Boolean} FSM_Predicate */
+/** @typedef {function (ExtendedState, EventData, FSM_Settings) : Boolean} FSM_Predicate */
 /**
  * @typedef {Object} Debug_Settings
  * @property {*} checkContracts opaque type. Just use the fsmContracts that is exported by Kingly.
@@ -91,7 +91,7 @@
  * @property {{EventLabel, EventData}} eventLabel
  * @property {ControlState} targetControlState
  * @property {FSM_Predicate} predicate
- * @property {ExtendedStateUpdate} updates
+ * @property {ExtendedStateUpdates} updates
  * @property {ExtendedState} extendedState
  * @property {ActionFactory} actionFactory
  * @property {Number} guardIndex
@@ -119,7 +119,7 @@
  * @typedef {*} ExtendedState extended state for a given state machine
  */
 /**
- * @typedef {*} ExtendedStateUpdate
+ * @typedef {*} ExtendedStateUpdates
  */
 /** @typedef {null} NO_OUTPUT
 /** @typedef {* | NO_OUTPUT} MachineOutput well it is preferrable that that be an object instead of a primitive */

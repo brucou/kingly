@@ -58,13 +58,13 @@ Then
 
 ## Adding undo
 ```gherkin
-:1:, :2: (Whites turn)
+:1:, :2: (:Whites turn:)
 When the user clicks undo
 Then
   If there has been at least one move
   Then undo the move, update the chess board, update the player turn, -> :3:
 
-:3:, :4: (Blacks turn)
+:3:, :4: (:Blacks turn:)
 When the user clicks undo
 Then
   If there has been at least one move
@@ -285,6 +285,8 @@ Given :compound state identifier: (:x:, :y:)
 When entered (RESERVED!!)
 Then ... as usual
 -> :..:
+
+NO! there is no need to specify initial state for compound states. that is a standard eventless transition. so no when
 ```
 
 ADR:
@@ -328,6 +330,7 @@ ALMOST:
 Semantics:
 - t1 - t2 : what if t2 cannot be taken?
   - t2 and t1 do not share a common state: semantic error (contract)
+    - sometimes you will only be able to see at runtime, like `exp-t`, exp may end in a state different from t origin
   - t2 starts where t1 ends but cannot be taken because of the previous inputs = current ext state (guard can't be fulfilled)
     - what to do? warning with path so far and no path output? YES, path generation can be reattempted
     - BUT if there is no path at all generated even after X arbitraries attempt, log an error? but that's not an error from the reactive system specifications, thats a user error. Wrong test writing. So thats a warning!
@@ -340,10 +343,17 @@ Or put the properties directly below the path?
 Scenario fragment <expression_identifier>
 r1-r2-...
 
-Scenario path <identifier>
-t1-t2-(exp)?-(exp)+{MAX}-(exp)*{MAX}-t1 or t2- any -
+Scenario <identifier>
+-t1-t2-(exp)?-(exp)+{MAX}-(exp)*{MAX}-t1 or t2- any -
 Satisfies property description                       | javascript function identifier
 Satisfies property description                       | javascript function identifier
+
+Can also returns EOL / may allow to insert property along the traversal
+-t1 ~ satisfies ... | javascript function identifier
+-t2-(exp)?
+etc.
+
+replace the ?+ by words, more user friendly vs. programmer friendly
 
 ```
 

@@ -1,4 +1,13 @@
 # TODO
+- In the IDE
+  - https://paperclip.dev/docs/guide-how-to-use
+  - this is the perfect tool to develop presentational components
+- contracts
+  - change the contract about compound state needing initial states!
+    - replace with compound states THAT ARE target states
+    - that allows for easier factorization, in preparation for the textual DSL
+- New editor: cytoscape? All the yEd layouts are available (for free?)
+  - https://apps.cytoscape.org/apps/yfileslayoutalgorithms
 - Examples
   - I could also redo the wizard form example!!
     - same, first
